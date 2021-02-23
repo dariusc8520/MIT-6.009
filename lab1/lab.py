@@ -73,12 +73,8 @@ def correlate(image, kernel):
         'width': image['width'],
         'pixels': []
     }
-    # print('height:', image['height'])
-    # print('width:', image['width'])
-    
     n = int(math.sqrt(len(kernel)))
     offset = int(n//2)
-    
     
     for y in range(image['height']):
         for x in range(image['width']):
@@ -88,7 +84,6 @@ def correlate(image, kernel):
                     color = get_pixel(image, x+i, y+j)
                     avg_value += kernel[((i+offset)*n)+j+offset]*color
             set_pixel(result, avg_value)
-    #print("correlate number of pixels:",len(result['pixels']))   
     return result
 
 def round_and_clip_image(image):
@@ -113,9 +108,7 @@ def round_and_clip_image(image):
             randc = 0
         if randc > 255:
             randc = 255
-        set_pixel(result, randc)
-    # print("rounding number of pixels:",len(result['pixels'])) 
-    # print('last pixel:', (result['pixels'][-1]))     
+        set_pixel(result, randc)  
     return result
 
 # FILTERS
@@ -140,11 +133,20 @@ def blurred(image, n):
     # print('pre rounding number of pixels:', len(blurred_image['pixels']))
     return round_and_clip_image(blurred_image)
 
-def blur_kernel(n):
-    blur = [1/n]*n
-    print(blur)
-    return blur
+def blur_kernel(n): 
+    return [1/n]*n
 
+def sharpened(image, n):
+    result = {
+        'height': image['height'],
+        'width': image['width'],
+        'pixels': []
+    }
+    
+    blurred_image = blurred(image,n)
+    scaled_image = [2*value for value in image['pixels']]
+    result['pixels'] = [scaled-blur for scaled, blur in zip(scaled_image, blurred_image['pixels'])]
+    return round_and_clip_image(result)
 # HELPER FUNCTIONS FOR LOADING AND SAVING IMAGES
 
 def load_image(filename):
