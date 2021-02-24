@@ -9,6 +9,7 @@ from PIL import Image as Image
 
 def get_pixel(image, x, y):
     y = y*image['width']
+    
     if x < 0:
         x = 0
         #print('x 0 edge')
@@ -81,7 +82,7 @@ def correlate(image, kernel):
             avg_value = 0
             for i in range(0-offset,offset+1):
                 for j in range(0-offset,offset+1):
-                    color = get_pixel(image, x+i, y+j)
+                    color = get_pixel(image, x+j, y+i)
                     avg_value += kernel[((i+offset)*n)+j+offset]*color
             set_pixel(result, avg_value)
     return result
@@ -195,12 +196,6 @@ if __name__ == '__main__':
     # generating images, etc.
     #bluegill = load_image('test_images/bluegill.png')
     #save_image(inverted(bluegill),'test_results/inv_bluegill.png')
-    #kernel = [0, 0, 0,
-            #   0, 1, 0,
-            #   0, 0, 0]
-    # im = load_image( 'test_images/centered_pixel.png')
-    # result = blurred(im,5)
-    # print(result)
     
     kernel = [0, 0, 0, 0, 0, 0, 0, 0, 0,
               0, 0, 0, 0, 0, 0, 0, 0, 0,
@@ -214,25 +209,27 @@ if __name__ == '__main__':
     
     pigbird = load_image('test_images/pigbird.png')
     correlated = correlate(pigbird,kernel)
+    print('original first 100:',pigbird['pixels'][0:100])
+    print('correlated first 100:',correlated['pixels'][0:100])
     clipped = round_and_clip_image(correlated)
     save_image(clipped,'test_results/correlated_pigbird.png')
     
-    cat = load_image('test_images/cat.png')
-    save_image(blurred(cat,5),'test_results/blurred_cat.png')
+    # cat = load_image('test_images/cat.png')
+    # save_image(blurred(cat,5),'test_results/blurred_cat.png')
     
-    expected = {
-        'height': 11,
-        'width': 11,
-        'pixels': [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-                   0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-                   0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-                   0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-                   0, 0, 0, 0, 28, 28, 28, 0, 0, 0, 0,
-                   0, 0, 0, 0, 28, 28, 28, 0, 0, 0, 0,
-                   0, 0, 0, 0, 28, 28, 28, 0, 0, 0, 0,
-                   0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-                   0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-                   0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-                   0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-    }
-    save_image(expected,'test_results/centered_pixel_blur_03.png')
+    # expected = {
+    #     'height': 11,
+    #     'width': 11,
+    #     'pixels': [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    #                0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    #                0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    #                0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    #                0, 0, 0, 0, 28, 28, 28, 0, 0, 0, 0,
+    #                0, 0, 0, 0, 28, 28, 28, 0, 0, 0, 0,
+    #                0, 0, 0, 0, 28, 28, 28, 0, 0, 0, 0,
+    #                0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    #                0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    #                0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    #                0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    # }
+    # save_image(expected,'test_results/centered_pixel_blur_03.png')
