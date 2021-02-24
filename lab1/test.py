@@ -180,7 +180,25 @@ def test_edges_images(fname):
 
 def test_edges_centered_pixel():
     # REPLACE THIS with your test case from section 6
-    assert False
+    im = lab.load_image(os.path.join(TEST_DIRECTORY, 'test_images', 'centered_pixel.png'))
+    result = lab.edges(im)
+    expected = {
+        'height': 11,
+        'width': 11,
+        'pixels': [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                   0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                   0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                   0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                   0, 0, 0, 0, 255, 255, 255, 0, 0, 0, 0,
+                   0, 0, 0, 0, 255, 0, 255, 0, 0, 0, 0,
+                   0, 0, 0, 0, 255, 255, 255, 0, 0, 0, 0,
+                   0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                   0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                   0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                   0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    }
+    compare_images(result, expected)
+
 
 if __name__ == '__main__':
     import sys

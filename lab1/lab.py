@@ -31,11 +31,7 @@ def set_pixel(image, c):
 
 
 def apply_per_pixel(image, func):
-    result = {
-        'height': image['height'],
-        'width': image['width'],
-        'pixels': []
-    }
+    result = result = copy(image)
     for y in range(image['height']):
         for x in range(image['width']):
             color = get_pixel(image, x, y)
@@ -69,11 +65,7 @@ def correlate(image, kernel):
     Odd number of rows and columns
     Square (nxn)
     """
-    result = {
-        'height': image['height'],
-        'width': image['width'],
-        'pixels': []
-    }
+    result = result = copy(image)
     n = int(math.sqrt(len(kernel)))
     offset = int(n//2)
     
@@ -98,11 +90,7 @@ def round_and_clip_image(image):
     255 in the output; and any locations with values lower than 0 in the input
     should have value 0 in the output.
     """
-    result = {
-        'height': image['height'],
-        'width': image['width'],
-        'pixels': []
-    }
+    result = result = copy(image)
     for value in image['pixels']:
         randc = round(value)
         if randc < 0:
@@ -124,7 +112,7 @@ def blurred(image, n):
     """
     # first, create a representation for the appropriate n-by-n kernel (you may
     # wish to define another helper function for this)
-    kernel = blur_kernel(n*n)
+    kernel = blur_kernel(n)
 
     # then compute the correlation of the input image with that kernel
     blurred_image = correlate(image,kernel)
@@ -135,19 +123,39 @@ def blurred(image, n):
     return round_and_clip_image(blurred_image)
 
 def blur_kernel(n): 
-    return [1/n]*n
+    return [1/(n*n)]*(n*n)
 
 def sharpened(image, n):
-    result = {
-        'height': image['height'],
-        'width': image['width'],
-        'pixels': []
-    }
+    result = copy(image)
     
     blurred_image = blurred(image,n)
     scaled_image = [2*value for value in image['pixels']]
     result['pixels'] = [scaled-blur for scaled, blur in zip(scaled_image, blurred_image['pixels'])]
     return round_and_clip_image(result)
+
+def edges(image):
+    result = copy(image)
+    
+    kx = [-1, 0, 1,
+          -2, 0, 2,
+          -1, 0, 1]
+    
+    ky = [-1, -2, -1,
+           0,  0,  0,
+           1,  2,  1]
+    
+    ox2 = [value*value for value in correlate(image,kx)['pixels']]
+    oy2 = [value*value for value in correlate(image,ky)['pixels']]
+    result['pixels'] = [round(math.sqrt(ox2_val + oy2_val)) for ox2_val, oy2_val in zip(ox2,oy2)]
+    return round_and_clip_image(result)
+    
+def copy(image):
+    return {
+        'height': image['height'],
+        'width': image['width'],
+        'pixels': []
+    }
+
 # HELPER FUNCTIONS FOR LOADING AND SAVING IMAGES
 
 def load_image(filename):
@@ -197,22 +205,20 @@ if __name__ == '__main__':
     #bluegill = load_image('test_images/bluegill.png')
     #save_image(inverted(bluegill),'test_results/inv_bluegill.png')
     
-    kernel = [0, 0, 0, 0, 0, 0, 0, 0, 0,
-              0, 0, 0, 0, 0, 0, 0, 0, 0,
-              1, 0, 0, 0, 0, 0, 0, 0, 0,
-              0, 0, 0, 0, 0, 0, 0, 0, 0,
-              0, 0, 0, 0, 0, 0, 0, 0, 0,
-              0, 0, 0, 0, 0, 0, 0, 0, 0,
-              0, 0, 0, 0, 0, 0, 0, 0, 0,
-              0, 0, 0, 0, 0, 0, 0, 0, 0,
-              0, 0, 0, 0, 0, 0, 0, 0, 0]
+    # kernel = [0, 0, 0, 0, 0, 0, 0, 0, 0,
+    #           0, 0, 0, 0, 0, 0, 0, 0, 0,
+    #           1, 0, 0, 0, 0, 0, 0, 0, 0,
+    #           0, 0, 0, 0, 0, 0, 0, 0, 0,
+    #           0, 0, 0, 0, 0, 0, 0, 0, 0,
+    #           0, 0, 0, 0, 0, 0, 0, 0, 0,
+    #           0, 0, 0, 0, 0, 0, 0, 0, 0,
+    #           0, 0, 0, 0, 0, 0, 0, 0, 0,
+    #           0, 0, 0, 0, 0, 0, 0, 0, 0]
     
-    pigbird = load_image('test_images/pigbird.png')
-    correlated = correlate(pigbird,kernel)
-    print('original first 100:',pigbird['pixels'][0:100])
-    print('correlated first 100:',correlated['pixels'][0:100])
-    clipped = round_and_clip_image(correlated)
-    save_image(clipped,'test_results/correlated_pigbird.png')
+    # pigbird = load_image('test_images/pigbird.png')
+    # correlated = correlate(pigbird,kernel)
+    # clipped = round_and_clip_image(correlated)
+    # save_image(clipped,'test_results/correlated_pigbird.png')
     
     # cat = load_image('test_images/cat.png')
     # save_image(blurred(cat,5),'test_results/blurred_cat.png')
@@ -233,3 +239,9 @@ if __name__ == '__main__':
     #                0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
     # }
     # save_image(expected,'test_results/centered_pixel_blur_03.png')
+    
+    python = load_image('test_images/python.png')
+    save_image(sharpened(python,11),'test_results/sharpened_python.png')
+    
+    center = load_image('test_images/centered_pixel.png')
+    save_image(edges(center),'test_results/edge_centered_pixel.png')
