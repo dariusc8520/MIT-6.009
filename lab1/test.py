@@ -199,7 +199,6 @@ def test_edges_centered_pixel():
     }
     compare_images(result, expected)
 
-
 if __name__ == '__main__':
     import sys
     import json
