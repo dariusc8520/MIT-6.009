@@ -174,15 +174,37 @@ def copy(image):
     Returns a dictionary with the same height, width, and an empty pixels list
     """
     return {'height': image['height'], 'width': image['width'], 'pixels': [] }
-# VARIOUS FILTERS
+#
+#  VARIOUS FILTERS
 def color_filter_from_greyscale_filter(filt):
     """
     Given a filter that takes a greyscale image as input and produces a
     greyscale image as output, returns a function that takes a color image as
     input and produces the filtered color image.
     """
-    raise NotImplementedError
+    def color_split(image):
+        red = [pixel_val[0] for pixel_val in image['pixels']]
+        green = [pixel_val[1] for pixel_val in image['pixels']]
+        blue = [pixel_val[2] for pixel_val in image['pixels']]
+        return [red, green, blue]
 
+    def apply_per_color(image):
+        colors = color_split(image)
+
+        red_copy = copy(image)
+        red_copy['pixels'] = colors[0]
+        green_copy = copy(image)
+        green_copy['pixels'] = colors[1]
+        blue_copy = copy(image)
+        blue_copy['pixels'] = colors[2]
+
+        red_filt = filt(red_copy)
+        green_filt = filt(green_copy)
+        blue_filt = filt(blue_copy)
+
+        inverted_colors = [(red,green,blue) for red, green, blue in zip(red_filt['pixels'], green_filt['pixels'], blue_filt['pixels'])]
+        return {'height': image['height'], 'width': image['width'], 'pixels': inverted_colors }
+    return apply_per_color
 
 def make_blur_filter(n):
     raise NotImplementedError
@@ -345,4 +367,7 @@ if __name__ == '__main__':
     # code in this block will only be run when you explicitly run your script,
     # and not when the tests are being run.  this is a good place for
     # generating images, etc.
-    pass
+    color_inverted = color_filter_from_greyscale_filter(inverted)
+    inverted_color_cat = color_inverted(load_color_image('test_images/cat.png'))
+    save_color_image(inverted_color_cat,'test_results/inverted_color_cat.png')
+    
