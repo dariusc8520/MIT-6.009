@@ -243,8 +243,9 @@ def greyscale_image_from_color_image(image):
 
     Returns a greyscale image (represented as a dictionary).
     """
-    raise NotImplementedError
-
+    result = copy(image)
+    result['pixels'] = [round(0.299*value[0]+.587*value[1]+.114*value[2]) for value in image['pixels']]
+    return result
 
 def compute_energy(grey):
     """
@@ -253,7 +254,7 @@ def compute_energy(grey):
 
     Returns a greyscale image (represented as a dictionary).
     """
-    raise NotImplementedError
+    return edges(grey)
 
 
 def cumulative_energy_map(energy):
@@ -261,12 +262,22 @@ def cumulative_energy_map(energy):
     Given a measure of energy (e.g., the output of the compute_energy
     function), computes a "cumulative energy map" as described in the lab 2
     writeup.
-
     Returns a dictionary with 'height', 'width', and 'pixels' keys (but where
     the values in the 'pixels' array may not necessarily be in the range [0,
     255].
     """
-    raise NotImplementedError
+    result = copy(energy)
+    result['pixels'].extend(energy['pixels'][0:energy['height']])
+    for y in range(1,result['height']):
+        for x in range(result['width']):
+            left = get_pixel(energy,x-1,y-1)
+            above = get_pixel(energy,x,y-1)
+            right = get_pixel(energy,x+1,y-1)
+            pixel = get_pixel(energy,x,y)+min([left,above,right])
+            result['pixels'].append(pixel)
+        print(result['pixels'])
+    return result
+
 
 
 def minimum_energy_seam(cem):
@@ -368,23 +379,24 @@ if __name__ == '__main__':
     # and not when the tests are being run.  this is a good place for
     # generating images, etc.
 
-    #Inverted 
-    color_inverted = color_filter_from_greyscale_filter(inverted)
-    inverted_color_cat = color_inverted(load_color_image('test_images/cat.png'))
-    save_color_image(inverted_color_cat,'test_results/inverted_color_cat.png')
-    #Blurred
-    blur_filter = make_blur_filter(9)
-    color_blurred = color_filter_from_greyscale_filter(blur_filter)
-    blurred_python = color_blurred(load_color_image('test_images/python.png'))
-    save_color_image(blurred_python,'test_results/blurred_python.png')
-    #Sharpened 
-    sharp_filter = make_sharpen_filter(7)
-    color_sharp = color_filter_from_greyscale_filter(sharp_filter)
-    sharp_sparrowchick = color_sharp(load_color_image('test_images/sparrowchick.png'))
-    save_color_image(sharp_sparrowchick,'test_results/sharp_sparrowchick.png')
-    #Cascade
-    filter1 = color_filter_from_greyscale_filter(edges)
-    filter2 = color_filter_from_greyscale_filter(make_blur_filter(5))
-    filt = filter_cascade([filter1, filter1, filter2, filter1])
-    cascaded_frog = filt(load_color_image('test_images/frog.png'))
-    save_color_image(cascaded_frog,'test_results/cascaded_frog.png')
+    # #Inverted 
+    # color_inverted = color_filter_from_greyscale_filter(inverted)
+    # inverted_color_cat = color_inverted(load_color_image('test_images/cat.png'))
+    # save_color_image(inverted_color_cat,'test_results/inverted_color_cat.png')
+    # #Blurred
+    # blur_filter = make_blur_filter(9)
+    # color_blurred = color_filter_from_greyscale_filter(blur_filter)
+    # blurred_python = color_blurred(load_color_image('test_images/python.png'))
+    # save_color_image(blurred_python,'test_results/blurred_python.png')
+    # #Sharpened 
+    # sharp_filter = make_sharpen_filter(7)
+    # color_sharp = color_filter_from_greyscale_filter(sharp_filter)
+    # sharp_sparrowchick = color_sharp(load_color_image('test_images/sparrowchick.png'))
+    # save_color_image(sharp_sparrowchick,'test_results/sharp_sparrowchick.png')
+    # #Cascade
+    # filter1 = color_filter_from_greyscale_filter(edges)
+    # filter2 = color_filter_from_greyscale_filter(make_blur_filter(5))
+    # filt = filter_cascade([filter1, filter1, filter2, filter1])
+    # cascaded_frog = filt(load_color_image('test_images/frog.png'))
+    # save_color_image(cascaded_frog,'test_results/cascaded_frog.png')
+    pass
