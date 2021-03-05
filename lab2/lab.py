@@ -207,7 +207,7 @@ def color_filter_from_greyscale_filter(filt):
     return apply_per_color
 
 def make_blur_filter(n):
-    raise NotImplementedError
+    return blurred(image,n)
 
 
 def make_sharpen_filter(n):
