@@ -72,8 +72,7 @@ def correlate(image, kernel):
     Odd number of rows and columns
     Square (nxn)
     """
-    result = result = copy(image)
-    
+    result = copy(image)
     n = int(math.sqrt(len(kernel)))
     offset = int(n//2) #Offset necessary for kernel index range
     #iterates through all pixels in image
@@ -113,40 +112,6 @@ def round_and_clip_image(image):
 
 # FILTERS
 
-def blurred(image, n):
-    """
-    Return a new image representing the result of applying a box blur (with
-    kernel size n) to the given input image.
-
-    This process should not mutate the input image; rather, it should create a
-    separate structure to represent the output.
-    """
-    # first, create a representation for the appropriate n-by-n kernel (you may
-    # wish to define another helper function for this)
-    kernel = blur_kernel(n)
-    # then compute the correlation of the input image with that kernel
-    blurred_image = correlate(image,kernel)
-    # and, finally, make sure that the output is a valid image (using the
-    # helper function from above) before returning it.
-    return round_and_clip_image(blurred_image)
-
-def blur_kernel(n): 
-    """
-    Returns a kernel that is a list with n x n equal values of 1/(n*n)
-    """
-    return [1/(n*n)]*(n*n)
-
-def sharpened(image, n):
-    """
-    Returns a sharpened image by taking the the difference between a scaled image and a blurred image
-    Takes in an n value for the blur kernel
-    """
-    result = copy(image)
-    
-    blurred_image = blurred(image,n)
-    scaled_image = [2*value for value in image['pixels']]
-    result['pixels'] = [scaled-blur for scaled, blur in zip(scaled_image, blurred_image['pixels'])]
-    return round_and_clip_image(result)
 
 def edges(image):
     """
@@ -207,11 +172,42 @@ def color_filter_from_greyscale_filter(filt):
     return apply_per_color
 
 def make_blur_filter(n):
-    return blurred(image,n)
+    def blurred(image):
+        """
+        Return a new image representing the result of applying a box blur (with
+        kernel size n) to the given input image.
 
+        This process should not mutate the input image; rather, it should create a
+        separate structure to represent the output.
+        """
+        blurred_image = correlate(image,kernel)
+        # and, finally, make sure that the output is a valid image (using the
+        # helper function from above) before returning it.
+        return round_and_clip_image(blurred_image)
+
+    def blur_kernel(n): 
+        """
+        Returns a kernel that is a list with n x n equal values of 1/(n*n)
+        """
+        return [1/(n*n)]*(n*n)
+
+    kernel = blur_kernel(n)
+    return blurred
 
 def make_sharpen_filter(n):
-    raise NotImplementedError
+    
+    def sharpened(image):
+        """
+        Returns a sharpened image by taking the the difference between a scaled image and a blurred image
+        Takes in an n value for the blur kernel
+        """
+        result = copy(image)
+        blur_filter = make_blur_filter(n)  
+        blurred_image = blur_filter(image)
+        scaled_image = [2*value for value in image['pixels']]
+        result['pixels'] = [scaled-blur for scaled, blur in zip(scaled_image, blurred_image['pixels'])]
+        return round_and_clip_image(result)
+    return sharpened
 
 
 def filter_cascade(filters):
@@ -367,7 +363,18 @@ if __name__ == '__main__':
     # code in this block will only be run when you explicitly run your script,
     # and not when the tests are being run.  this is a good place for
     # generating images, etc.
+    #Inverted 
     color_inverted = color_filter_from_greyscale_filter(inverted)
     inverted_color_cat = color_inverted(load_color_image('test_images/cat.png'))
     save_color_image(inverted_color_cat,'test_results/inverted_color_cat.png')
+    #Blurred
+    blur_filter = make_blur_filter(9)
+    color_blurred = color_filter_from_greyscale_filter(blur_filter)
+    blurred_python = color_blurred(load_color_image('test_images/python.png'))
+    save_color_image(blurred_python,'test_results/blurred_python.png')
+    #Sharpened 
+    sharp_filter = make_sharpen_filter(7)
+    color_sharp = color_filter_from_greyscale_filter(sharp_filter)
+    sharp_sparrowchick = color_sharp(load_color_image('test_images/sparrowchick.png'))
+    save_color_image(sharp_sparrowchick,'test_results/sharp_sparrowchick.png')
     
