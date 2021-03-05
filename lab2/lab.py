@@ -5,6 +5,7 @@
 import math
 from PIL import Image
 
+##Code from Lab 1
 def get_pixel(image, x, y):
     """
     Retrieves the pixel value from image
@@ -148,30 +149,39 @@ def color_filter_from_greyscale_filter(filt):
     input and produces the filtered color image.
     """
     def color_split(image):
+        """
+        Splits up the color channels of an image and 
+        returns the [r,g,b] values in a nested list
+        """
         red = [pixel_val[0] for pixel_val in image['pixels']]
         green = [pixel_val[1] for pixel_val in image['pixels']]
         blue = [pixel_val[2] for pixel_val in image['pixels']]
         return [red, green, blue]
 
     def apply_per_color(image):
+        """
+        Applies a filter to each channel ([r,g,b]) in an image
+        """
         colors = color_split(image)
 
+        #Updating pixel values for each color
         red_copy = copy(image)
         red_copy['pixels'] = colors[0]
         green_copy = copy(image)
         green_copy['pixels'] = colors[1]
         blue_copy = copy(image)
         blue_copy['pixels'] = colors[2]
-
+        #Filtering per color channel
         red_filt = filt(red_copy)
         green_filt = filt(green_copy)
         blue_filt = filt(blue_copy)
-
+        #Wrapping colors back into a tuple
         inverted_colors = [(red,green,blue) for red, green, blue in zip(red_filt['pixels'], green_filt['pixels'], blue_filt['pixels'])]
         return {'height': image['height'], 'width': image['width'], 'pixels': inverted_colors }
     return apply_per_color
 
 def make_blur_filter(n):
+
     def blurred(image):
         """
         Return a new image representing the result of applying a box blur (with
@@ -180,9 +190,8 @@ def make_blur_filter(n):
         This process should not mutate the input image; rather, it should create a
         separate structure to represent the output.
         """
+        #Correlates image to the blur kernel
         blurred_image = correlate(image,kernel)
-        # and, finally, make sure that the output is a valid image (using the
-        # helper function from above) before returning it.
         return round_and_clip_image(blurred_image)
 
     def blur_kernel(n): 
@@ -224,7 +233,6 @@ def filter_cascade(filters):
 
 
 # SEAM CARVING
-
 # Main Seam Carving Implementation
 
 def seam_carving(image, ncols):
@@ -232,13 +240,14 @@ def seam_carving(image, ncols):
     Starting from the given image, use the seam carving technique to remove
     ncols (an integer) columns from the image.
     """
+    #Goes through each helper function every iteration of the resizing
     for col in range(ncols):
         grey = greyscale_image_from_color_image(image)
         energy = compute_energy(grey)
         cem = cumulative_energy_map(energy)
         seam = minimum_energy_seam(cem)
         image = image_without_seam(image,seam)
-        print("Number of Columns Done:", col)
+        #print("Number of Columns Done:", col)
     return image
 
 
@@ -275,14 +284,18 @@ def cumulative_energy_map(energy):
     255].
     """
     result = copy(energy)
+    #Copies first row
     result['pixels'].extend(energy['pixels'][0:energy['width']])
+    #Iterates from second row
     for y in range(1,result['height']):
         for x in range(result['width']):
+            #Adjacent Pixels
             left = get_pixel(result,x-1,y-1)
             above = get_pixel(result,x,y-1)
             right = get_pixel(result,x+1,y-1)
+            #Adding to minimum value to current value
             pixel = get_pixel(energy,x,y)+min([left,above,right])
-            result['pixels'].append(pixel)
+            set_pixel(result,pixel)
     return result
 
 def minimum_energy_seam(cem):
@@ -294,20 +307,18 @@ def minimum_energy_seam(cem):
     result = []
     height = cem['height']
     width = cem['width']
-    #print('height:',height,'width:',width)
-    
+    #Takes the x index of the minimum value in the last row
     min_pixel = cem['pixels'][-width:].index(min(cem['pixels'][-width:]))
-    #print('min_pixel:',min_pixel)
+    #Initial Indicces of the minimum value
     indy = height-1
     indx = min_pixel
-    #print('indx:',indx)
     result.append(indy*width+indx)
     for y in range(height-2,-1,-1):
-        
+        #Adjacent Pixels
         left = get_pixel(cem,indx-1,y)
         above = get_pixel(cem,indx,y)
         right = get_pixel(cem,indx+1,y)
-        
+        #Min val and breaking ties with left most option
         min_val = min([left,above,right])
         if left == min_val:
             indx = indx-1
@@ -315,17 +326,14 @@ def minimum_energy_seam(cem):
             indx = indx
         elif right == min_val:
             indx = indx + 1
-        #print('y:',y,'indx:',indx)
-
+        #Resetting indicces if they are out of bounds
         if indx > width-1:
             indx =  width-1
         if indx < 0:
             indx = 0
         indy = y
         result.append(indy*width+indx)
-    #print('result:',result)
     return result
-
 
 def image_without_seam(image, seam):
     """
@@ -335,10 +343,12 @@ def image_without_seam(image, seam):
     in the given list.
     """
     result = copy(image)
+    #Adjusts the width of the new image
     result['width'] = image['width']-1
+    #Adds values that are not in the seams list to a new image
     for count,val in enumerate(image['pixels']):
         if count not in seam:
-            result['pixels'].append(val)
+            set_pixel(result,val)
     return result
 
 # HELPER FUNCTIONS FOR LOADING AND SAVING COLOR IMAGES
@@ -415,6 +425,9 @@ def save_greyscale_image(image, filename, mode='PNG'):
         out.save(filename, mode)
     out.close()
 
+    #Personal Function
+    
+
 
 if __name__ == '__main__':
     # code in this block will only be run when you explicitly run your script,
@@ -442,7 +455,7 @@ if __name__ == '__main__':
     # cascaded_frog = filt(load_color_image('test_images/frog.png'))
     # save_color_image(cascaded_frog,'test_results/cascaded_frog.png')
     #Seam Carving
-    seam_carved_twocats = seam_carving(load_color_image('test_images/twocats.png'),100)
-    save_color_image(seam_carved_twocats,'test_results/seam_carved_twocats.png')
+    #seam_carved_twocats = seam_carving(load_color_image('test_images/twocats.png'),100)
+    #save_color_image(seam_carved_twocats,'test_results/seam_carved_twocats.png')
     
-    #pass
+    pass
