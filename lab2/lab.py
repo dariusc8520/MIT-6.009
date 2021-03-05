@@ -232,7 +232,14 @@ def seam_carving(image, ncols):
     Starting from the given image, use the seam carving technique to remove
     ncols (an integer) columns from the image.
     """
-    raise NotImplementedError
+    for col in range(ncols):
+        grey = greyscale_image_from_color_image(image)
+        energy = compute_energy(grey)
+        cem = cumulative_energy_map(energy)
+        seam = minimum_energy_seam(cem)
+        image = image_without_seam(image,seam)
+        print("Number of Columns Done:", col)
+    return image
 
 
 # Optional Helper Functions for Seam Carving
@@ -257,6 +264,7 @@ def compute_energy(grey):
     return edges(grey)
 
 
+
 def cumulative_energy_map(energy):
     """
     Given a measure of energy (e.g., the output of the compute_energy
@@ -267,18 +275,15 @@ def cumulative_energy_map(energy):
     255].
     """
     result = copy(energy)
-    result['pixels'].extend(energy['pixels'][0:energy['height']])
+    result['pixels'].extend(energy['pixels'][0:energy['width']])
     for y in range(1,result['height']):
         for x in range(result['width']):
-            left = get_pixel(energy,x-1,y-1)
-            above = get_pixel(energy,x,y-1)
-            right = get_pixel(energy,x+1,y-1)
+            left = get_pixel(result,x-1,y-1)
+            above = get_pixel(result,x,y-1)
+            right = get_pixel(result,x+1,y-1)
             pixel = get_pixel(energy,x,y)+min([left,above,right])
             result['pixels'].append(pixel)
-        print(result['pixels'])
     return result
-
-
 
 def minimum_energy_seam(cem):
     """
@@ -286,7 +291,40 @@ def minimum_energy_seam(cem):
     'pixels' list that correspond to pixels contained in the minimum-energy
     seam (computed as described in the lab 2 writeup).
     """
-    raise NotImplementedError
+    result = []
+    height = cem['height']
+    width = cem['width']
+    #print('height:',height,'width:',width)
+    
+    min_pixel = cem['pixels'][-width:].index(min(cem['pixels'][-width:]))
+    #print('min_pixel:',min_pixel)
+    indy = height-1
+    indx = min_pixel
+    #print('indx:',indx)
+    result.append(indy*width+indx)
+    for y in range(height-2,-1,-1):
+        
+        left = get_pixel(cem,indx-1,y)
+        above = get_pixel(cem,indx,y)
+        right = get_pixel(cem,indx+1,y)
+        
+        min_val = min([left,above,right])
+        if left == min_val:
+            indx = indx-1
+        elif above == min_val:
+            indx = indx
+        elif right == min_val:
+            indx = indx + 1
+        #print('y:',y,'indx:',indx)
+
+        if indx > width-1:
+            indx =  width-1
+        if indx < 0:
+            indx = 0
+        indy = y
+        result.append(indy*width+indx)
+    #print('result:',result)
+    return result
 
 
 def image_without_seam(image, seam):
@@ -296,8 +334,12 @@ def image_without_seam(image, seam):
     pixels from the original image except those corresponding to the locations
     in the given list.
     """
-    raise NotImplementedError
-
+    result = copy(image)
+    result['width'] = image['width']-1
+    for count,val in enumerate(image['pixels']):
+        if count not in seam:
+            result['pixels'].append(val)
+    return result
 
 # HELPER FUNCTIONS FOR LOADING AND SAVING COLOR IMAGES
 
@@ -399,4 +441,8 @@ if __name__ == '__main__':
     # filt = filter_cascade([filter1, filter1, filter2, filter1])
     # cascaded_frog = filt(load_color_image('test_images/frog.png'))
     # save_color_image(cascaded_frog,'test_results/cascaded_frog.png')
-    pass
+    #Seam Carving
+    seam_carved_twocats = seam_carving(load_color_image('test_images/twocats.png'),100)
+    save_color_image(seam_carved_twocats,'test_results/seam_carved_twocats.png')
+    
+    #pass
