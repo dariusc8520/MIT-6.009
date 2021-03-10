@@ -5,6 +5,7 @@
 import math
 from PIL import Image
 
+##Code from Lab 1
 def get_pixel(image, x, y):
     """
     Retrieves the pixel value from image
@@ -72,8 +73,7 @@ def correlate(image, kernel):
     Odd number of rows and columns
     Square (nxn)
     """
-    result = result = copy(image)
-    
+    result = copy(image)
     n = int(math.sqrt(len(kernel)))
     offset = int(n//2) #Offset necessary for kernel index range
     #iterates through all pixels in image
@@ -113,40 +113,6 @@ def round_and_clip_image(image):
 
 # FILTERS
 
-def blurred(image, n):
-    """
-    Return a new image representing the result of applying a box blur (with
-    kernel size n) to the given input image.
-
-    This process should not mutate the input image; rather, it should create a
-    separate structure to represent the output.
-    """
-    # first, create a representation for the appropriate n-by-n kernel (you may
-    # wish to define another helper function for this)
-    kernel = blur_kernel(n)
-    # then compute the correlation of the input image with that kernel
-    blurred_image = correlate(image,kernel)
-    # and, finally, make sure that the output is a valid image (using the
-    # helper function from above) before returning it.
-    return round_and_clip_image(blurred_image)
-
-def blur_kernel(n): 
-    """
-    Returns a kernel that is a list with n x n equal values of 1/(n*n)
-    """
-    return [1/(n*n)]*(n*n)
-
-def sharpened(image, n):
-    """
-    Returns a sharpened image by taking the the difference between a scaled image and a blurred image
-    Takes in an n value for the blur kernel
-    """
-    result = copy(image)
-    
-    blurred_image = blurred(image,n)
-    scaled_image = [2*value for value in image['pixels']]
-    result['pixels'] = [scaled-blur for scaled, blur in zip(scaled_image, blurred_image['pixels'])]
-    return round_and_clip_image(result)
 
 def edges(image):
     """
@@ -183,35 +149,74 @@ def color_filter_from_greyscale_filter(filt):
     input and produces the filtered color image.
     """
     def color_split(image):
+        """
+        Splits up the color channels of an image and 
+        returns the [r,g,b] values in a nested list
+        """
         red = [pixel_val[0] for pixel_val in image['pixels']]
         green = [pixel_val[1] for pixel_val in image['pixels']]
         blue = [pixel_val[2] for pixel_val in image['pixels']]
         return [red, green, blue]
 
     def apply_per_color(image):
+        """
+        Applies a filter to each channel ([r,g,b]) in an image
+        """
         colors = color_split(image)
 
+        #Updating pixel values for each color
         red_copy = copy(image)
         red_copy['pixels'] = colors[0]
         green_copy = copy(image)
         green_copy['pixels'] = colors[1]
         blue_copy = copy(image)
         blue_copy['pixels'] = colors[2]
-
+        #Filtering per color channel
         red_filt = filt(red_copy)
         green_filt = filt(green_copy)
         blue_filt = filt(blue_copy)
-
+        #Wrapping colors back into a tuple
         inverted_colors = [(red,green,blue) for red, green, blue in zip(red_filt['pixels'], green_filt['pixels'], blue_filt['pixels'])]
         return {'height': image['height'], 'width': image['width'], 'pixels': inverted_colors }
     return apply_per_color
 
 def make_blur_filter(n):
-    raise NotImplementedError
 
+    def blurred(image):
+        """
+        Return a new image representing the result of applying a box blur (with
+        kernel size n) to the given input image.
+
+        This process should not mutate the input image; rather, it should create a
+        separate structure to represent the output.
+        """
+        #Correlates image to the blur kernel
+        blurred_image = correlate(image,kernel)
+        return round_and_clip_image(blurred_image)
+
+    def blur_kernel(n): 
+        """
+        Returns a kernel that is a list with n x n equal values of 1/(n*n)
+        """
+        return [1/(n*n)]*(n*n)
+
+    kernel = blur_kernel(n)
+    return blurred
 
 def make_sharpen_filter(n):
-    raise NotImplementedError
+    
+    def sharpened(image):
+        """
+        Returns a sharpened image by taking the the difference between a scaled image and a blurred image
+        Takes in an n value for the blur kernel
+        """
+        result = copy(image)
+        blur_filter = make_blur_filter(n)  
+        blurred_image = blur_filter(image)
+        scaled_image = [2*value for value in image['pixels']]
+        result['pixels'] = [scaled-blur for scaled, blur in zip(scaled_image, blurred_image['pixels'])]
+        return round_and_clip_image(result)
+    return sharpened
 
 
 def filter_cascade(filters):
@@ -220,11 +225,14 @@ def filter_cascade(filters):
     single filter such that applying that filter to an image produces the same
     output as applying each of the individual ones in turn.
     """
-    raise NotImplementedError
+    def cascade(image):
+        for filter in filters:
+            image = filter(image)
+        return image
+    return cascade
 
 
 # SEAM CARVING
-
 # Main Seam Carving Implementation
 
 def seam_carving(image, ncols):
@@ -232,7 +240,15 @@ def seam_carving(image, ncols):
     Starting from the given image, use the seam carving technique to remove
     ncols (an integer) columns from the image.
     """
-    raise NotImplementedError
+    #Goes through each helper function every iteration of the resizing
+    for col in range(ncols):
+        grey = greyscale_image_from_color_image(image)
+        energy = compute_energy(grey)
+        cem = cumulative_energy_map(energy)
+        seam = minimum_energy_seam(cem)
+        image = image_without_seam(image,seam)
+        #print("Number of Columns Done:", col)
+    return image
 
 
 # Optional Helper Functions for Seam Carving
@@ -243,8 +259,9 @@ def greyscale_image_from_color_image(image):
 
     Returns a greyscale image (represented as a dictionary).
     """
-    raise NotImplementedError
-
+    result = copy(image)
+    result['pixels'] = [round(0.299*value[0]+.587*value[1]+.114*value[2]) for value in image['pixels']]
+    return result
 
 def compute_energy(grey):
     """
@@ -253,7 +270,8 @@ def compute_energy(grey):
 
     Returns a greyscale image (represented as a dictionary).
     """
-    raise NotImplementedError
+    return edges(grey)
+
 
 
 def cumulative_energy_map(energy):
@@ -261,13 +279,24 @@ def cumulative_energy_map(energy):
     Given a measure of energy (e.g., the output of the compute_energy
     function), computes a "cumulative energy map" as described in the lab 2
     writeup.
-
     Returns a dictionary with 'height', 'width', and 'pixels' keys (but where
     the values in the 'pixels' array may not necessarily be in the range [0,
     255].
     """
-    raise NotImplementedError
-
+    result = copy(energy)
+    #Copies first row
+    result['pixels'].extend(energy['pixels'][0:energy['width']])
+    #Iterates from second row
+    for y in range(1,result['height']):
+        for x in range(result['width']):
+            #Adjacent Pixels
+            left = get_pixel(result,x-1,y-1)
+            above = get_pixel(result,x,y-1)
+            right = get_pixel(result,x+1,y-1)
+            #Adding to minimum value to current value
+            pixel = get_pixel(energy,x,y)+min([left,above,right])
+            set_pixel(result,pixel)
+    return result
 
 def minimum_energy_seam(cem):
     """
@@ -275,8 +304,36 @@ def minimum_energy_seam(cem):
     'pixels' list that correspond to pixels contained in the minimum-energy
     seam (computed as described in the lab 2 writeup).
     """
-    raise NotImplementedError
-
+    result = []
+    height = cem['height']
+    width = cem['width']
+    #Takes the x index of the minimum value in the last row
+    min_pixel = cem['pixels'][-width:].index(min(cem['pixels'][-width:]))
+    #Initial Indicces of the minimum value
+    indy = height-1
+    indx = min_pixel
+    result.append(indy*width+indx)
+    for y in range(height-2,-1,-1):
+        #Adjacent Pixels
+        left = get_pixel(cem,indx-1,y)
+        above = get_pixel(cem,indx,y)
+        right = get_pixel(cem,indx+1,y)
+        #Min val and breaking ties with left most option
+        min_val = min([left,above,right])
+        if left == min_val:
+            indx = indx-1
+        elif above == min_val:
+            indx = indx
+        elif right == min_val:
+            indx = indx + 1
+        #Resetting indicces if they are out of bounds
+        if indx > width-1:
+            indx =  width-1
+        if indx < 0:
+            indx = 0
+        indy = y
+        result.append(indy*width+indx)
+    return result
 
 def image_without_seam(image, seam):
     """
@@ -285,8 +342,14 @@ def image_without_seam(image, seam):
     pixels from the original image except those corresponding to the locations
     in the given list.
     """
-    raise NotImplementedError
-
+    result = copy(image)
+    #Adjusts the width of the new image
+    result['width'] = image['width']-1
+    #Adds values that are not in the seams list to a new image
+    for count,val in enumerate(image['pixels']):
+        if count not in seam:
+            set_pixel(result,val)
+    return result
 
 # HELPER FUNCTIONS FOR LOADING AND SAVING COLOR IMAGES
 
@@ -362,12 +425,37 @@ def save_greyscale_image(image, filename, mode='PNG'):
         out.save(filename, mode)
     out.close()
 
+    #Personal Function
+    
+
 
 if __name__ == '__main__':
     # code in this block will only be run when you explicitly run your script,
     # and not when the tests are being run.  this is a good place for
     # generating images, etc.
-    color_inverted = color_filter_from_greyscale_filter(inverted)
-    inverted_color_cat = color_inverted(load_color_image('test_images/cat.png'))
-    save_color_image(inverted_color_cat,'test_results/inverted_color_cat.png')
+
+    # #Inverted 
+    # color_inverted = color_filter_from_greyscale_filter(inverted)
+    # inverted_color_cat = color_inverted(load_color_image('test_images/cat.png'))
+    # save_color_image(inverted_color_cat,'test_results/inverted_color_cat.png')
+    # #Blurred
+    # blur_filter = make_blur_filter(9)
+    # color_blurred = color_filter_from_greyscale_filter(blur_filter)
+    # blurred_python = color_blurred(load_color_image('test_images/python.png'))
+    # save_color_image(blurred_python,'test_results/blurred_python.png')
+    # #Sharpened 
+    # sharp_filter = make_sharpen_filter(7)
+    # color_sharp = color_filter_from_greyscale_filter(sharp_filter)
+    # sharp_sparrowchick = color_sharp(load_color_image('test_images/sparrowchick.png'))
+    # save_color_image(sharp_sparrowchick,'test_results/sharp_sparrowchick.png')
+    # #Cascade
+    # filter1 = color_filter_from_greyscale_filter(edges)
+    # filter2 = color_filter_from_greyscale_filter(make_blur_filter(5))
+    # filt = filter_cascade([filter1, filter1, filter2, filter1])
+    # cascaded_frog = filt(load_color_image('test_images/frog.png'))
+    # save_color_image(cascaded_frog,'test_results/cascaded_frog.png')
+    #Seam Carving
+    #seam_carved_twocats = seam_carving(load_color_image('test_images/twocats.png'),100)
+    #save_color_image(seam_carved_twocats,'test_results/seam_carved_twocats.png')
     
+    pass
