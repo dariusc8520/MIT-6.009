@@ -3,6 +3,7 @@
 # NO ADDITIONAL IMPORTS!
 # (except in the last part of the lab; see the lab writeup for details)
 import math
+import random
 from PIL import Image
 
 ##Code from Lab 1
@@ -231,7 +232,29 @@ def filter_cascade(filters):
         return image
     return cascade
 
+def rand_mirror_filter(image):
+    """
+    Takes an image and mirros all the entire image about the y axis
+    """
+    mirror = copy(image)
+    height = image['height']
+    width = image['width']
 
+    for y in range(height):
+        rint = random.randint(1,20)
+        row = image['pixels'][y*width:(y+1)*width]
+        row.reverse()
+        mirror['pixels'].extend(row)
+    rand = copy(mirror)
+    for y in range(height):
+        for x in range(width):
+            rint = random.randint(1,20)
+            color = get_pixel(mirror,x,y)
+            newcolor = rint/10*color
+            set_pixel(rand,newcolor)
+    return round_and_clip_image(rand)
+    
+    
 # SEAM CARVING
 # Main Seam Carving Implementation
 
@@ -457,5 +480,8 @@ if __name__ == '__main__':
     #Seam Carving
     #seam_carved_twocats = seam_carving(load_color_image('test_images/twocats.png'),100)
     #save_color_image(seam_carved_twocats,'test_results/seam_carved_twocats.png')
-    
-    pass
+    #Mirror
+    color_mirror = color_filter_from_greyscale_filter(rand_mirror_filter)
+    rand_mirrored_python = color_mirror(load_color_image('test_images/python.png'))
+    save_color_image(rand_mirrored_python,'test_results/rand_mirrored_python.png')
+    #pass
