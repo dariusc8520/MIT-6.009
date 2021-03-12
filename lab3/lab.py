@@ -101,12 +101,53 @@ def bacon_path(data, actor_id):
             return None
         else:
             parent_node = parent_node_copy
-
-        
         
 def actor_to_actor_path(data, actor_id_1, actor_id_2):
-    raise NotImplementedError("Implement me!")
+    actors = data[1]
+    bacon = actor_id_1 #bacon's id number
+    actors[bacon].discard(bacon) #Removes bacon from his own children
+    if actor_id_2 == bacon:
+        return [bacon]
+    paths = {bacon:[bacon]}
+    visited = set()
+    parent_node = {bacon}
+    while True:
+        unvisited_nodes = parent_node
+        unvisited_nodes.difference_update(visited)
+        parent_node_copy = parent_node.copy()
+        for node in unvisited_nodes:
+            visited.update([node])
+            parent_layer = actors[node]
+            for actor in parent_layer:
+                parent_node_copy.update([actor])
+                if actor not in paths:
+                    parent_path = paths[node].copy()
+                    parent_path.append(actor)
+                    paths.update({actor:parent_path})
+                    if actor == actor_id_2:
+                        return paths[actor]
+        if parent_node==parent_node_copy:
+            return None
+        else:
+            parent_node = parent_node_copy
 
+def actor_to_actor_movie_path(data, actor_id_1, actor_id_2):
+    actors = data[1]
+    movies = data[0]
+    a_to_a_path = actor_to_actor_path(data,actor_id_1,actor_id_2)
+    list_of_movies = []
+    for i in range(0,len(a_to_a_path)-1):
+        actor_1 = a_to_a_path[i]
+        actor_2 = a_to_a_path[i+1]
+        found_movie=False
+        while found_movie==False:
+            for movie in movies:
+                #print(movie)
+                if {actor_1,actor_2}.issubset(movies[movie]):
+                    list_of_movies.append(movie)
+                    found_movie=True
+                    break
+    return list_of_movies
 
 def actor_path(data, actor_id_1, goal_test_function):
     raise NotImplementedError("Implement me!")
@@ -150,22 +191,56 @@ if __name__ == '__main__':
     # position = [val_list.index(actor) for actor in actor_ids]
     # print(set([key_list[pos] for pos in position]))
 
-    #6
-    with  open('resources/large.pickle', 'rb') as f:
-        largedb = pickle.load(f)
-    data = transform_data(largedb)
-    with  open('resources/names.pickle', 'rb') as f:
-        namedb = pickle.load(f)
-    margie_id = namedb['Margie Angus']
-    print('Margie ID:',margie_id)
-    margie_path = bacon_path(data,margie_id)
-    print('Margie Path:',margie_path)
-    key_list = list(namedb.keys())
-    val_list = list(namedb.values())
-    position = [val_list.index(actor) for actor in margie_path]
-    print([key_list[pos] for pos in position])
+    # #6.1
+    # with  open('resources/large.pickle', 'rb') as f:
+    #     largedb = pickle.load(f)
+    # data = transform_data(largedb)
+    # with  open('resources/names.pickle', 'rb') as f:
+    #     namedb = pickle.load(f)
+    # margie_id = namedb['Margie Angus']
+    # print('Margie ID:',margie_id)
+    # margie_path = bacon_path(data,margie_id)
+    # print('Margie Path:',margie_path)
+    # key_list = list(namedb.keys())
+    # val_list = list(namedb.values())
+    # position = [val_list.index(actor) for actor in margie_path]
+    # print([key_list[pos] for pos in position])
 
-
+    # #6.2
+    # with  open('resources/large.pickle', 'rb') as f:
+    #     largedb = pickle.load(f)
+    # data = transform_data(largedb)
+    # with  open('resources/names.pickle', 'rb') as f:
+    #     namedb = pickle.load(f)
+    # Jenna_id = namedb['Jenna Ruiz']
+    # Ellen_id = namedb['Ellen Barkin']
+    # print('Jenna ID:',Jenna_id)
+    # print('Ellen ID:',Ellen_id)
+    # Ellen_path = actor_to_actor_path(data,Jenna_id,Ellen_id)
+    # print('Ellen Path:',Ellen_path)
+    # key_list = list(namedb.keys())
+    # val_list = list(namedb.values())
+    # position = [val_list.index(actor) for actor in Ellen_path]
+    # print([key_list[pos] for pos in position])
+    
+    # #7
+    # with open('resources/names.pickle', 'rb') as f:
+    #     namedb = pickle.load(f)
+    # actor_id_1 = namedb['Geoffrey Wigdor']
+    # actor_id_2 = namedb['Vjeran Tin Turk']
+    # with  open('resources/movies.pickle', 'rb') as f:
+    #     moviesdb = pickle.load(f)
+    # with  open('resources/large.pickle', 'rb') as f:
+    #     largedb = pickle.load(f)
+    # movie_list = actor_to_actor_movie_path(transform_data(largedb),actor_id_1,actor_id_2)
+    # key_list = list(moviesdb.keys())
+    # val_list = list(moviesdb.values())
+    # position = [val_list.index(actor) for actor in movie_list]
+    # print([key_list[pos] for pos in position])
+    
+    
+    
+    
     # additional code here will be run only when lab.py is invoked directly
     # (not when imported from test.py), so this is a good place to put code
     # used, for example, to generate the results for the online questions.
