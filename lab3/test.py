@@ -140,7 +140,7 @@ def test_bacon_number_04():
 
 def test_bacon_path_tiny():
     actor_id = 1640
-    len_expected = 3
+    len_expected = 2
 
     result = lab.bacon_path(db_tiny, actor_id)
     check_valid_path(fset_tiny, result, 4724, actor_id, len_expected)

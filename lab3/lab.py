@@ -80,26 +80,28 @@ def bacon_path(data, actor_id):
     if actor_id == bacon:
         return [bacon]
     paths = {bacon:[bacon]}
-    visited = {bacon}
-    parent_node = [bacon]
-    parent_layer = actors[parent_node.pop()] #Layer where n=1
-    child_layer = set()
+    visited = set()
+    parent_node = {bacon}
     while True:
-        for actor in parent_layer:
-            visited.add(actor) #Updates visited actors
-            child_layer.update(actors[actor])
-            if actor not in paths:
-                parent_path = paths[parent_node].copy()
-                parent_path.append(actor)
-                paths.update({actor:parent_path})
-                if actor == actor_id:
-                    return paths[actor]
-        child_layer.difference_update(visited)
-        if child_layer == set(): #Checks for the empty graph case
+        unvisited_nodes = parent_node
+        unvisited_nodes.difference_update(visited)
+        parent_node_copy = parent_node.copy()
+        for node in unvisited_nodes:
+            visited.update([node])
+            parent_layer = actors[node]
+            for actor in parent_layer:
+                parent_node_copy.update([actor])
+                if actor not in paths:
+                    parent_path = paths[node].copy()
+                    parent_path.append(actor)
+                    paths.update({actor:parent_path})
+                    if actor == actor_id:
+                        return paths[actor]
+        if parent_node==parent_node_copy:
             return None
-        parent_layer = child_layer #Updates parent and children
-        child_layer = set()
-        parent_node = 
+        else:
+            parent_node = parent_node_copy
+
         
         
 def actor_to_actor_path(data, actor_id_1, actor_id_2):
@@ -149,8 +151,21 @@ if __name__ == '__main__':
     # print(set([key_list[pos] for pos in position]))
 
     #6
-    
-    
+    with  open('resources/large.pickle', 'rb') as f:
+        largedb = pickle.load(f)
+    data = transform_data(largedb)
+    with  open('resources/names.pickle', 'rb') as f:
+        namedb = pickle.load(f)
+    margie_id = namedb['Margie Angus']
+    print('Margie ID:',margie_id)
+    margie_path = bacon_path(data,margie_id)
+    print('Margie Path:',margie_path)
+    key_list = list(namedb.keys())
+    val_list = list(namedb.values())
+    position = [val_list.index(actor) for actor in margie_path]
+    print([key_list[pos] for pos in position])
+
+
     # additional code here will be run only when lab.py is invoked directly
     # (not when imported from test.py), so this is a good place to put code
     # used, for example, to generate the results for the online questions.
