@@ -43,8 +43,34 @@ def acted_together(data, actor_id_1, actor_id_2):
     return actor_id_2 in data[1][actor_id_1]
 
 def actors_with_bacon_number(data, n):
-    raise NotImplementedError("Implement me!")
-
+    movies = data[0]
+    actors = data[1]
+    bacon = 4724
+    actors[4724].discard(4724)
+    if n==0:
+        return {bacon}
+    elif n==1:
+        return actors[4724]
+    else:
+        visited = {bacon}
+        visited.update(actors[4724])
+        queue = [bacon]
+        visiting = set()
+        while n>1:
+            node = queue.pop(0)
+            for actor in actors[node]:
+                visited.add(actor)
+                visiting.update(actors[actor])
+            visiting.symmetric_difference_update(visited)
+            for node in visiting:
+                queue.append(node)
+            n-=1
+        return visiting
+            
+    # elif n==1:
+    #     actors[4724].discard(4724)
+    #     return actors[4724]
+    
 
 def bacon_path(data, actor_id):
     raise NotImplementedError("Implement me!")
@@ -79,8 +105,11 @@ if __name__ == '__main__':
         namedb = pickle.load(f)
     with  open('resources/tiny.pickle', 'rb') as f:
         tinydb = pickle.load(f)
+    data = transform_data(tinydb)
     print(tinydb)
-    print(transform_data(tinydb))
+    print(data)
+    data[1][4724].discard(4724)
+    print(data[1])
     
     # print(transform_data(tinydb))
     # print(tinydb)

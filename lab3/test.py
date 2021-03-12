@@ -63,28 +63,28 @@ def test_acted_together_additional(test_num):
 def test_tiny_bacon_number_0():
     #Actors with a bacon number of 0 in Tiny
     expected = {4724}
-    result = (lab.actors_with_bacon_number(db_tiny,0))
+    result = lab.actors_with_bacon_number(db_tiny,0)
     assert isinstance(result, set)
     assert result == expected
 
 def test_tiny_bacon_number_1():
     #Actors with a bacon number of 1 in Tiny
     expected = {2876,1532}
-    result = (lab.actors_with_bacon_number(db_tiny,1))
+    result = lab.actors_with_bacon_number(db_tiny,1)
     assert isinstance(result, set)
     assert result == expected
     
 def test_tiny_bacon_number_2():
     #Actors with a bacon number of 2 in Tiny
     expected = {1640}
-    result = (lab.actors_with_bacon_number(db_tiny,2))
+    result = lab.actors_with_bacon_number(db_tiny,2)
     assert isinstance(result, set)
     assert result == expected
 
 def test_tiny_bacon_number_3():
     #Actors with a bacon number of 3 in Tiny
     expected = set()
-    result = (lab.actors_with_bacon_number(db_tiny,3))
+    result = lab.actors_with_bacon_number(db_tiny,3)
     assert isinstance(result, set)
     assert result == expected
 
