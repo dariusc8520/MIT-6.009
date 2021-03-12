@@ -53,23 +53,21 @@ def actors_with_bacon_number(data, n):
         return actors[4724]
     else:
         visited = {bacon}
-        visited.update(actors[4724])
-        queue = [bacon]
-        visiting = set()
-        while n>1:
-            node = queue.pop(0)
-            for actor in actors[node]:
+        #visited.update(actors[4724])
+        parent_layer = actors[4724]
+        child_layer = set()
+        while True:
+            for actor in parent_layer:
                 visited.add(actor)
-                visiting.update(actors[actor])
-            visiting.symmetric_difference_update(visited)
-            for node in visiting:
-                queue.append(node)
+                child_layer.update(actors[actor])
+            child_layer.difference_update(visited)
+            if child_layer == set():
+                return set()
             n-=1
-        return visiting
-            
-    # elif n==1:
-    #     actors[4724].discard(4724)
-    #     return actors[4724]
+            if n==1:
+                return child_layer
+            parent_layer = child_layer
+            child_layer = set()
     
 
 def bacon_path(data, actor_id):
