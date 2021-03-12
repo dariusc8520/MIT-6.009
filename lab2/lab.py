@@ -241,7 +241,6 @@ def rand_mirror_filter(image):
     width = image['width']
 
     for y in range(height):
-        rint = random.randint(1,20)
         row = image['pixels'][y*width:(y+1)*width]
         row.reverse()
         mirror['pixels'].extend(row)
