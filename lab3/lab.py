@@ -63,18 +63,25 @@ def actors_connecting_films(data, film1, film2):
 
 
 if __name__ == '__main__':
-    #4a
-    with open('resources/names.pickle', 'rb') as f:
+    # #4
+    # with open('resources/names.pickle', 'rb') as f:
+    #     namedb = pickle.load(f)
+    # actor_id_1 = namedb['Patrick Malahide']
+    # actor_id_2 = namedb['Kristen Bone']
+    # actor_id_3 = namedb['Beatrice Winde']
+    # actor_id_4 = namedb['Rex Linn']
+    # with open('resources/small.pickle', 'rb') as f:
+    #     smalldb = pickle.load(f)
+    # print('Have P. Malahide and K. Bone acted together?',acted_together(transform_data(smalldb),actor_id_1,actor_id_2))
+    # print('Have B. Winde and R. Linn acted together?',acted_together(transform_data(smalldb),actor_id_3,actor_id_4))
+    #5
+    with  open('resources/names.pickle', 'rb') as f:
         namedb = pickle.load(f)
-    actor_id_1 = namedb['Patrick Malahide']
-    actor_id_2 = namedb['Kristen Bone']
-    actor_id_3 = namedb['Beatrice Winde']
-    actor_id_4 = namedb['Rex Linn']
-    with open('resources/small.pickle', 'rb') as f:
-        smalldb = pickle.load(f)
-    print('Have P. Malahide and K. Bone acted together?',acted_together(transform_data(smalldb),actor_id_1,actor_id_2))
-    print('Have B. Winde and R. Linn acted together?',acted_together(transform_data(smalldb),actor_id_3,actor_id_4))
-
+    with  open('resources/tiny.pickle', 'rb') as f:
+        tinydb = pickle.load(f)
+    print(tinydb)
+    print(transform_data(tinydb))
+    
     # print(transform_data(tinydb))
     # print(tinydb)
     # key_list = list(smalldb.keys())
