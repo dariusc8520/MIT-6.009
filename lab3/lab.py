@@ -40,33 +40,38 @@ def transform_data(raw_data):
 
 
 def acted_together(data, actor_id_1, actor_id_2):
+    """
+    Returns True if actor 1 and actor 2 have been in a movie together. False otherwise
+    """
     return actor_id_2 in data[1][actor_id_1]
 
 def actors_with_bacon_number(data, n):
+    """
+    Takes in a graph and returns all the actors with a Bacon number n
+    """
     movies = data[0]
     actors = data[1]
-    bacon = 4724
-    actors[4724].discard(4724)
-    if n==0:
+    bacon = 4724 #bacon's id number
+    actors[bacon].discard(bacon) #Removes bacon from his own children
+    if n==0: 
         return {bacon}
     elif n==1:
-        return actors[4724]
-    else:
+        return actors[bacon]
+    else: #For n>1 cases
         visited = {bacon}
-        #visited.update(actors[4724])
-        parent_layer = actors[4724]
+        parent_layer = actors[bacon] #Layer where n=1
         child_layer = set()
         while True:
-            for actor in parent_layer:
-                visited.add(actor)
+            for actor in parent_layer: #Adds all the children of the parent layer
+                visited.add(actor) #Updates visited actors
                 child_layer.update(actors[actor])
-            child_layer.difference_update(visited)
-            if child_layer == set():
+            child_layer.difference_update(visited) #Removes actors if they've been visited
+            if child_layer == set(): #Checks for the empty graph case
                 return set()
             n-=1
             if n==1:
                 return child_layer
-            parent_layer = child_layer
+            parent_layer = child_layer #Updates parent and children
             child_layer = set()
     
 
@@ -98,23 +103,27 @@ if __name__ == '__main__':
     #     smalldb = pickle.load(f)
     # print('Have P. Malahide and K. Bone acted together?',acted_together(transform_data(smalldb),actor_id_1,actor_id_2))
     # print('Have B. Winde and R. Linn acted together?',acted_together(transform_data(smalldb),actor_id_3,actor_id_4))
-    #5
-    with  open('resources/names.pickle', 'rb') as f:
-        namedb = pickle.load(f)
-    with  open('resources/tiny.pickle', 'rb') as f:
-        tinydb = pickle.load(f)
-    data = transform_data(tinydb)
-    print(tinydb)
-    print(data)
-    data[1][4724].discard(4724)
-    print(data[1])
     
-    # print(transform_data(tinydb))
+    #5
+    # with  open('resources/names.pickle', 'rb') as f:
+    #     namedb = pickle.load(f)
+    # with  open('resources/tiny.pickle', 'rb') as f:
+    #     tinydb = pickle.load(f)
+    # data = transform_data(tinydb)
     # print(tinydb)
-    # key_list = list(smalldb.keys())
-    # val_list = list(smalldb.values())
-    # position = val_list.index(557932)
-    # print(key_list[position])
+    # print(data)
+    # data[1][4724].discard(4724)
+    # print(data[1])
+    
+    # with  open('resources/large.pickle', 'rb') as f:
+    #     largedb = pickle.load(f)
+    # data = transform_data(largedb)
+    # actor_ids = actors_with_bacon_number(data,6)
+    # print(actor_ids)
+    # key_list = list(namedb.keys())
+    # val_list = list(namedb.values())
+    # position = [val_list.index(actor) for actor in actor_ids]
+    # print(set([key_list[pos] for pos in position]))
 
     
     # additional code here will be run only when lab.py is invoked directly
