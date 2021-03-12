@@ -47,9 +47,8 @@ def acted_together(data, actor_id_1, actor_id_2):
 
 def actors_with_bacon_number(data, n):
     """
-    Takes in a graph and returns all the actors with a Bacon number n
+    Takes in a graph and returns all the actors with a Bacon number n as a set
     """
-    movies = data[0]
     actors = data[1]
     bacon = 4724 #bacon's id number
     actors[bacon].discard(bacon) #Removes bacon from his own children
@@ -73,12 +72,36 @@ def actors_with_bacon_number(data, n):
                 return child_layer
             parent_layer = child_layer #Updates parent and children
             child_layer = set()
-    
 
 def bacon_path(data, actor_id):
-    raise NotImplementedError("Implement me!")
-
-
+    actors = data[1]
+    bacon = 4724 #bacon's id number
+    actors[bacon].discard(bacon) #Removes bacon from his own children
+    if actor_id == bacon:
+        return [bacon]
+    paths = {bacon:[bacon]}
+    visited = {bacon}
+    parent_node = [bacon]
+    parent_layer = actors[parent_node.pop()] #Layer where n=1
+    child_layer = set()
+    while True:
+        for actor in parent_layer:
+            visited.add(actor) #Updates visited actors
+            child_layer.update(actors[actor])
+            if actor not in paths:
+                parent_path = paths[parent_node].copy()
+                parent_path.append(actor)
+                paths.update({actor:parent_path})
+                if actor == actor_id:
+                    return paths[actor]
+        child_layer.difference_update(visited)
+        if child_layer == set(): #Checks for the empty graph case
+            return None
+        parent_layer = child_layer #Updates parent and children
+        child_layer = set()
+        parent_node = 
+        
+        
 def actor_to_actor_path(data, actor_id_1, actor_id_2):
     raise NotImplementedError("Implement me!")
 
@@ -125,6 +148,8 @@ if __name__ == '__main__':
     # position = [val_list.index(actor) for actor in actor_ids]
     # print(set([key_list[pos] for pos in position]))
 
+    #6
+    
     
     # additional code here will be run only when lab.py is invoked directly
     # (not when imported from test.py), so this is a good place to put code

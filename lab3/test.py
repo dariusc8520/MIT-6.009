@@ -138,7 +138,13 @@ def test_bacon_number_04():
     assert len(lab.actors_with_bacon_number(lab.transform_data(make_bacon_tree(N, k)), int(1e20))) == 0
     assert len(lab.actors_with_bacon_number(lab.transform_data(make_bacon_tree(N, k)), int(1e20))) == 0
 
+def test_bacon_path_tiny():
+    actor_id = 1640
+    len_expected = 3
 
+    result = lab.bacon_path(db_tiny, actor_id)
+    check_valid_path(fset_tiny, result, 4724, actor_id, len_expected)
+    
 def test_bacon_path_01():
     # Bacon path, small database, path does not exist
     actor_id = 2876669
