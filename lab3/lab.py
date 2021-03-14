@@ -83,7 +83,7 @@ def bacon_path(data, actor_id):
     if actor_id == bacon: #Checks base case
         return [bacon]
     paths = {bacon:[bacon]}
-    visited = set() #Visited list
+    visited = set() 
     parent_node = {bacon}
     while True:
         unvisited_nodes = parent_node
@@ -119,23 +119,23 @@ def actor_to_actor_path(data, actor_id_1, actor_id_2):
     parent_node = {bacon}
     while True:
         unvisited_nodes = parent_node
-        unvisited_nodes.difference_update(visited)
+        unvisited_nodes.difference_update(visited)#Removes visited nodes
         parent_node_copy = parent_node.copy()
         for node in unvisited_nodes:
-            visited.update([node])
-            parent_layer = actors[node]
+            visited.update([node])#Updates visited
+            parent_layer = actors[node]#Checks th current layer layer
             for actor in parent_layer:
-                parent_node_copy.update([actor])
-                if actor not in paths:
+                parent_node_copy.update([actor])#Updates set of nodes we need to visit
+                if actor not in paths:#Creates a path for them if they don't have one already
                     parent_path = paths[node].copy()
                     parent_path.append(actor)
                     paths.update({actor:parent_path})
-                    if actor == actor_id_2:
-                        return paths[actor]
-        if parent_node==parent_node_copy:
+                    if actor == actor_id_2:#Checks condition
+                        return paths[actor]#Breaks loops if so
+        if parent_node==parent_node_copy: #Checks for the empty graph case
             return None
         else:
-            parent_node = parent_node_copy
+            parent_node = parent_node_copy#Updates original set
 
 def actor_to_actor_movie_path(data, actor_id_1, actor_id_2):
     """
@@ -143,28 +143,25 @@ def actor_to_actor_movie_path(data, actor_id_1, actor_id_2):
     """
     actors = data[1]
     movies = data[0]
-    a_to_a_path = actor_to_actor_path(data,actor_id_1,actor_id_2)
+    a_to_a_path = actor_to_actor_path(data,actor_id_1,actor_id_2) #Gets actor path
     list_of_movies = []
-    for i in range(0,len(a_to_a_path)-1):
+    for i in range(0,len(a_to_a_path)-1): #iterates through every pair of actors in the list
         actor_1 = a_to_a_path[i]
         actor_2 = a_to_a_path[i+1]
-        found_movie=False
-        while found_movie==False:
+        while True:
             for movie in movies:
-                #print(movie)
-                if {actor_1,actor_2}.issubset(movies[movie]):
-                    list_of_movies.append(movie)
-                    found_movie=True
+                if {actor_1,actor_2}.issubset(movies[movie]): #Checks if they are in a movie together
+                    list_of_movies.append(movie) #Appends the first one they are in
                     break
     return list_of_movies
 
-##Helper Function
+##Helper Function for actor_path
 def actors_to_actor_with_bacon_number(data,actor_id, n):
     """
     Takes in a graph and returns all the actors with a Bacon number n as a set
     """
     actors = data[1]
-    bacon = actor_id #bacon's id number
+    bacon = actor_id #actor's id number
     actors[bacon].discard(bacon) #Removes bacon from his own children
     if n==0: 
         return {bacon}
@@ -194,14 +191,14 @@ def actor_path(data, actor_id_1, goal_test_function):
     actors = data[1]
     movies = data[0]
     bacon_number = 0
-    while True:
-        for actor in actors_to_actor_with_bacon_number(data,actor_id_1,bacon_number):
+    while True: #Goes through lowest bacon numbers first to deal with time restriction on the p=True case
+        for actor in actors_to_actor_with_bacon_number(data,actor_id_1,bacon_number): #Iterates through actors with bacon number n
             if goal_test_function(actor):
-                return actor_to_actor_path(data,actor_id_1,actor)
+                return actor_to_actor_path(data,actor_id_1,actor) #Returns the first path that is viable. Also would return the minimum length
         bacon_number+=1
-        if bacon_number > 10:
+        if bacon_number > 10: #Just an ending case for times sake
             break
-    return None
+    return None #If nothing matches goal_test_function, loop will break and return None
 
 def actors_connecting_films(data, film1, film2):
     """
@@ -209,16 +206,15 @@ def actors_connecting_films(data, film1, film2):
     """
     actors = data[1]
     movies = data[0]
-    possible_lists = []
     result = []
-    min_len = 1000
-    for actor_id_1 in movies[film1]:
+    min_len = 1000 #Arbitrary
+    for actor_id_1 in movies[film1]: #Iterates through actors in each movie
         for actor_id_2 in movies[film2]:
-            actor_list = actor_to_actor_path(data,actor_id_1,actor_id_2)
-            if len(actor_list)<min_len:
+            actor_list = actor_to_actor_path(data,actor_id_1,actor_id_2) #Gets path
+            if len(actor_list)<min_len: #Updates if shorter
                 min_len=len(actor_list)
                 result = actor_list
-    return None if result == [] else result
+    return None if result == [] else result #Will not update result if there is no path
 
 if __name__ == '__main__':
     # #4
