@@ -202,7 +202,7 @@ def test_bacon_path_06():
     assert result == expected
 
 def test_actor_to_actor_path_tiny():
-    # Actor path, Tiny database 3 actors, 2 movies
+    # Actor path, Tiny database 3 actors, 2
     actor_1 = 1640
     actor_2 = 1532
     len_expected = 2
@@ -309,7 +309,7 @@ def test_actor_path_01():
     assert result is None
 
 def test_actor_path_02():
-    result = lab.actor_path(db_large, 975260, lambda p: p==975260)
+    result = lab.actor_path(db_large, 975260, lambda p: True)
     result2 = lab.actor_path(db_large, 975260, lambda p: p == 975260)
     assert result == result2 == [975260]
 

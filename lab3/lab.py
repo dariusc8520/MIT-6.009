@@ -74,37 +74,43 @@ def actors_with_bacon_number(data, n):
             child_layer = set()
 
 def bacon_path(data, actor_id):
+    """
+    Takes in an actor id and returns the path of actors as a list to get from Bacon to that actor
+    """
     actors = data[1]
     bacon = 4724 #bacon's id number
     actors[bacon].discard(bacon) #Removes bacon from his own children
-    if actor_id == bacon:
+    if actor_id == bacon: #Checks base case
         return [bacon]
     paths = {bacon:[bacon]}
-    visited = set()
+    visited = set() #Visited list
     parent_node = {bacon}
     while True:
         unvisited_nodes = parent_node
-        unvisited_nodes.difference_update(visited)
-        parent_node_copy = parent_node.copy()
-        for node in unvisited_nodes:
-            visited.update([node])
-            parent_layer = actors[node]
+        unvisited_nodes.difference_update(visited) #Removes visited nodes
+        parent_node_copy = parent_node.copy() #Doesn't affect original list
+        for node in unvisited_nodes:  
+            visited.update([node]) #Updates visited
+            parent_layer = actors[node] #Checks th current layer layer
             for actor in parent_layer:
-                parent_node_copy.update([actor])
-                if actor not in paths:
+                parent_node_copy.update([actor]) #Updates set of nodes we need to visit
+                if actor not in paths: #Creates a path for them if they don't have one already
                     parent_path = paths[node].copy()
                     parent_path.append(actor)
                     paths.update({actor:parent_path})
-                    if actor == actor_id:
-                        return paths[actor]
-        if parent_node==parent_node_copy:
+                    if actor == actor_id: #Checks condition
+                        return paths[actor] #Breaks loops if so
+        if parent_node==parent_node_copy: #Checks for the empty graph case
             return None
         else:
-            parent_node = parent_node_copy
+            parent_node = parent_node_copy #Updates original set
         
 def actor_to_actor_path(data, actor_id_1, actor_id_2):
+    """
+    Takes in an actor id and returns the path of actors as a list to get from another actor to that actor
+    """
     actors = data[1]
-    bacon = actor_id_1 #bacon's id number
+    bacon = actor_id_1 #New actor's ID
     actors[bacon].discard(bacon) #Removes bacon from his own children
     if actor_id_2 == bacon:
         return [bacon]
@@ -152,42 +158,66 @@ def actor_to_actor_movie_path(data, actor_id_1, actor_id_2):
                     break
     return list_of_movies
 
+##Helper Function
+def actors_to_actor_with_bacon_number(data,actor_id, n):
+    """
+    Takes in a graph and returns all the actors with a Bacon number n as a set
+    """
+    actors = data[1]
+    bacon = actor_id #bacon's id number
+    actors[bacon].discard(bacon) #Removes bacon from his own children
+    if n==0: 
+        return {bacon}
+    elif n==1:
+        return actors[bacon]
+    else: #For n>1 cases
+        visited = {bacon}
+        parent_layer = actors[bacon] #Layer where n=1
+        child_layer = set()
+        while True:
+            for actor in parent_layer: #Adds all the children of the parent layer
+                visited.add(actor) #Updates visited actors
+                child_layer.update(actors[actor])
+            child_layer.difference_update(visited) #Removes actors if they've been visited
+            if child_layer == set(): #Checks for the empty graph case
+                return set()
+            n-=1
+            if n==1:
+                return child_layer
+            parent_layer = child_layer #Updates parent and children
+            child_layer = set()
+##
 def actor_path(data, actor_id_1, goal_test_function):
+    """
+    Returns the shortest actor list from one actor to another actor in a set
+    """
     actors = data[1]
     movies = data[0]
-    possible_lists = []
-    result = []    
-    for actor in actors:
-        if goal_test_function(actor):
-            print(actor)
-            if actor == actor_id_1:
-                result = [actor_id_1]
-            else:
-                actor_list = actor_to_actor_path(data,actor_id_1,actor)
-                possible_lists.append(actor_list)
-    min_len = 1000
-    if result == []:
-        for lst in possible_lists:
-            if len(lst)<min_len:
-                min_len = len(lst)
-                result = lst
-    return None if result == [] else result
+    bacon_number = 0
+    while True:
+        for actor in actors_to_actor_with_bacon_number(data,actor_id_1,bacon_number):
+            if goal_test_function(actor):
+                return actor_to_actor_path(data,actor_id_1,actor)
+        bacon_number+=1
+        if bacon_number > 10:
+            break
+    return None
 
 def actors_connecting_films(data, film1, film2):
+    """
+    Returns the shortest list of actors that connect two films
+    """
     actors = data[1]
     movies = data[0]
     possible_lists = []
     result = []
+    min_len = 1000
     for actor_id_1 in movies[film1]:
         for actor_id_2 in movies[film2]:
             actor_list = actor_to_actor_path(data,actor_id_1,actor_id_2)
-            possible_lists.append(actor_list)
-    min_len = 1000
-    if result == []:
-        for lst in possible_lists:
-            if len(lst)<min_len:
-                min_len = len(lst)
-                result = lst
+            if len(actor_list)<min_len:
+                min_len=len(actor_list)
+                result = actor_list
     return None if result == [] else result
 
 if __name__ == '__main__':
