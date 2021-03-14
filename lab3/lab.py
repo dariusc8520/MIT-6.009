@@ -132,6 +132,9 @@ def actor_to_actor_path(data, actor_id_1, actor_id_2):
             parent_node = parent_node_copy
 
 def actor_to_actor_movie_path(data, actor_id_1, actor_id_2):
+    """
+    Returns a list of movies that connects two actors
+    """
     actors = data[1]
     movies = data[0]
     a_to_a_path = actor_to_actor_path(data,actor_id_1,actor_id_2)
@@ -150,12 +153,42 @@ def actor_to_actor_movie_path(data, actor_id_1, actor_id_2):
     return list_of_movies
 
 def actor_path(data, actor_id_1, goal_test_function):
-    raise NotImplementedError("Implement me!")
-
+    actors = data[1]
+    movies = data[0]
+    possible_lists = []
+    result = []    
+    for actor in actors:
+        if goal_test_function(actor):
+            print(actor)
+            if actor == actor_id_1:
+                result = [actor_id_1]
+            else:
+                actor_list = actor_to_actor_path(data,actor_id_1,actor)
+                possible_lists.append(actor_list)
+    min_len = 1000
+    if result == []:
+        for lst in possible_lists:
+            if len(lst)<min_len:
+                min_len = len(lst)
+                result = lst
+    return None if result == [] else result
 
 def actors_connecting_films(data, film1, film2):
-    raise NotImplementedError("Implement me!")
-
+    actors = data[1]
+    movies = data[0]
+    possible_lists = []
+    result = []
+    for actor_id_1 in movies[film1]:
+        for actor_id_2 in movies[film2]:
+            actor_list = actor_to_actor_path(data,actor_id_1,actor_id_2)
+            possible_lists.append(actor_list)
+    min_len = 1000
+    if result == []:
+        for lst in possible_lists:
+            if len(lst)<min_len:
+                min_len = len(lst)
+                result = lst
+    return None if result == [] else result
 
 if __name__ == '__main__':
     # #4
