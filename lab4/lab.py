@@ -50,16 +50,32 @@ def build_auxiliary_structures(nodes_filename, ways_filename):
         nodes_db[node['id']] = (node['lat'],node['lon'],node['tags'])
     return (nodes_db,ways_db)
     
-def get_distance(node1, node2):
+def get_distance(node_db,node1, node2):
     ''' 
     Returns the distance in miles given two Node ids
     '''
-    lat1 = midwest_nodes[node1][0]
-    lon1 = midwest_nodes[node1][1]
-    lat2 = midwest_nodes[node2][0]
-    lon2 = midwest_nodes[node2][1]
+    lat1 = node_db[node1][0]
+    lon1 = node_db[node1][1]
+    lat2 = node_db[node2][0]
+    lon2 = node_db[node2][1]
     return great_circle_distance((lat1,lon1),(lat2,lon2))
     
+def get_cost_and_path(ways_db,node1,node2,path_to_consider,agenda,visited):
+    for way in ways_db:
+        list_of_nodes = ways_db[way][0]
+        if node1 in list_of_nodes and node2 in list_of_nodes:
+            index = list_of_nodes.index(node1)
+            starting_node = list_of_nodes[index]
+            next_node = list_of_nodes[index+1]
+            if next_node not in visited:
+                cost = get_distance(starting_node,next_node)
+                new_path_to_consider = path_to_consider.append(next_node)
+                agenda.append((cost,new_path_to_consider))
+                visited.add(next_node)
+        print(agenda)
+        print(visited)
+    return (agenda,visited)
+
 def find_short_path_nodes(aux_structures, node1, node2):
     """
     Return the shortest path between the two nodes
@@ -76,28 +92,104 @@ def find_short_path_nodes(aux_structures, node1, node2):
     nodes_db = aux_structures[0]
     ways_db = aux_structures[1]
     agenda = []
+    visited = set()
+    #agenda,visited = get_cost_and_path(ways_db,node1,node2,[node1],agenda,visited)
+    if node1==node2:
+        return [node1]
+    
     for way in ways_db:
         list_of_nodes = ways_db[way][0]
-        if node1 in list_of_nodes and node2 in list_of_nodes:
+        if node1 in list_of_nodes:
+            print('list of nodes:', list_of_nodes)
             index = list_of_nodes.index(node1)
+            print('index:',index)
             starting_node = list_of_nodes[index]
-            next_node = list_of_nodes[index+1]
-            cost = get_distance(starting_node,next_node)
-            agenda.append((cost,[starting_node,next_node]))
-            #print('We got one')
-    #print('agenda:',agenda)
+            print('starting node:', starting_node)
+            try:
+                next_node = list_of_nodes[index+1]
+                print('next node(+1):',next_node)
+                cost = get_distance(nodes_db,starting_node,next_node)
+                agenda.append((cost,[starting_node,next_node]))
+            except:
+                pass
+            
+            if 'oneway' in ways_db[way][1]:
+                if ways_db[way][1]['oneway'] == 'yes':
+                    continue
+            try:
+                next_node = list_of_nodes[index-1]
+                print('next node(-1):',next_node)
+                cost = get_distance(nodes_db,starting_node,next_node)
+                agenda.append((cost,[starting_node,next_node]))
+            except:
+                pass
+
+    print('agenda:',agenda)
 
     visited = set()
-    #While True:
-    path_to_consider = agenda.pop(agenda.index(min(agenda)))
-    
-    
-    list_of_nodes = midwest_ways[21705939][0]
-    dist = 0
-    for i in range(len(list_of_nodes)-1):
-        id_1 = list_of_nodes[i]
-        id_2 = list_of_nodes[i+1]
-        dist += get_distance(id_1,id_2)
+    while True:
+        try:
+            min(agenda)
+        except:
+            return None
+        print('agenda',agenda)
+        print('min agenda:',min(agenda))
+        print('index:', agenda.index(min(agenda)))
+        (old_cost,path_to_consider) = agenda.pop(agenda.index(min(agenda)))
+        print('path:',path_to_consider)
+        last_node = path_to_consider[-1]
+        print('last node:', last_node)
+        if last_node == node2:
+            print('SUCCESS')
+            return path_to_consider
+        elif last_node not in visited:
+            visited.add(last_node)
+            print('visited:',visited)
+            # agenda,visited = get_cost_and_path(ways_db,last_node,node2,path_to_consider,agenda,visited)
+            for way in ways_db:
+                print("we're in this loop")
+                list_of_nodes = ways_db[way][0]
+                if last_node in list_of_nodes:
+                    print('list of nodes:', list_of_nodes)
+                    print("We're in the loop")
+                    index = list_of_nodes.index(last_node) #Last node here instead of node1
+                    starting_node = list_of_nodes[index]
+                    print('index:',index)
+                    starting_node = list_of_nodes[index]
+                    print('starting node:', starting_node)
+                    try:
+                        next_node = list_of_nodes[index+1]
+                        print('next node(+1):',next_node)
+                        cost = old_cost + get_distance(nodes_db,starting_node,next_node)
+                        print('old cost:',old_cost)
+                        print('cost:',cost)
+                        new_path = path_to_consider+ [next_node]
+                        agenda.append((cost,new_path))
+                    except:
+                        pass
+            
+                    if 'oneway' in ways_db[way][1]:
+                        if ways_db[way][1]['oneway'] == 'yes':
+                            continue
+                    try:
+                        next_node = list_of_nodes[index-1]
+                        print('next node(-1):',next_node)
+                        cost = old_cost + get_distance(nodes_db,starting_node,next_node)
+                        new_path = path_to_consider+ [next_node]
+                        agenda.append((cost,new_path))
+                    except:
+                        pass
+                    
+                    # next_node = list_of_nodes[index+1]
+                    # print('next node:',next_node)
+                    # cost = get_distance(node_db,starting_node,next_node)
+                    # print('cost:',cost)
+                    # new_path = [path_to_consider, next_node]
+                    # print('new path:', new_path)
+                    # agenda.append((cost,new_path))
+        if agenda == []:
+            break
+
 
 def find_short_path(aux_structures, loc1, loc2):
     """
@@ -157,12 +249,12 @@ if __name__ == '__main__':
     # print(i)
     
     '''3''' 
-    midwest_nodes,midwest_ways = build_auxiliary_structures('resources/midwest.nodes','resources/midwest.ways')
+    #midwest_nodes,midwest_ways = build_auxiliary_structures('resources/midwest.nodes','resources/midwest.ways')
 
     # print('Question 3.1.3.1:', great_circle_distance((42.363745, -71.100999),(42.361283,-71.239677)))
 
-    id_1 = 233941454
-    id_2 = 233947199
+    # id_1 = 233941454
+    # id_2 = 233947199
     # print('Question 3.1.3.2:', get_distance(id_1,id_2))
     
     # list_of_nodes = midwest_ways[21705939][0]
@@ -174,9 +266,17 @@ if __name__ == '__main__':
     # print('Question 3.1.3.3:',dist)
     
     '''Testing stuff '''
-    find_short_path_nodes((midwest_nodes,midwest_ways),6344453428, 6344453426)
+    #find_short_path_nodes((midwest_nodes,midwest_ways),6344453428, 6344453426)
+    
     # for way in midwest_ways:
     #     print(midwest_ways[way][0])
     # print(len(midwest_nodes))
     # print(midwest_nodes[id_1])
+    mit_nodes,mit_ways = build_auxiliary_structures('resources/mit.nodes','resources/mit.ways')
+    node1 = 2 # New House
+    node2 = 8 # 34-501
+    expected_path = [2, 1, 10, 5, 6, 8]
+    print(mit_ways)
+    find_short_path_nodes((mit_nodes,mit_ways),node1,node2)
+    #compare_result_expected(load_dataset('mit'), (node1, node2), expected_path, 'short', True)
     pass
