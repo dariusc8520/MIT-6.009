@@ -28,6 +28,7 @@ def compare_output(name, inputs, test_num, type_, nodes=False):
     exp_fname = f'test_data/test_{name}_{test_num:02d}_{type_}{"_nodes" if nodes else ""}.pickle'
     with open(exp_fname, 'rb') as f:
         expected_path = pickle.load(f)
+        print(expected_path)
     compare_result_expected(aux, inputs, expected_path, type_, nodes)
 
 
