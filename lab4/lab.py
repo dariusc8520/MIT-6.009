@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 from util import read_osm_data, great_circle_distance, to_local_kml_url
-
+import time
 # NO ADDITIONAL IMPORTS!
 
 
@@ -28,7 +28,7 @@ DEFAULT_SPEED_LIMIT_MPH = {
     'tertiary_link': 25,
 }
 
-
+start_time = time.perf_counter()
 def build_auxiliary_structures(nodes_filename, ways_filename):
     """
     Create any auxiliary structures you are interested in, by reading the data
@@ -38,18 +38,19 @@ def build_auxiliary_structures(nodes_filename, ways_filename):
     nodes_db has keys of ids and values of (lat, lon, {tags})
     ways_db has keys of ids and values of ([List of Nodes], {tags})
     """
+
     ways = read_osm_data(ways_filename)
     nodes = read_osm_data(nodes_filename)
     ways_db = {}
     nodes_db = {}
-    
+
     for node in nodes: #Initializes dictionary of nodes with empty neighbor set
         nodes_db[node['id']] = (node['lat'],node['lon'],node['tags'],set())
     
     for way in ways:
         if 'highway' in way['tags']:            
             if way['tags']['highway'] in ALLOWED_HIGHWAY_TYPES:
-                ways_db[way['id']] = (way['nodes'],way['tags']) #Initializes ways dictionary
+                ways_db[way['id']] = (set(way['nodes']),way['tags']) #Initializes ways dictionary
                 
                 for i in range(len(way['nodes'])-1): #Forward neighbors case
                     node = way['nodes'][i]
@@ -101,6 +102,48 @@ def get_cost_and_path(nodes_db,starting_node,node2,old_cost,path_to_consider,age
         new_path = path_to_consider+[neighbor]
         agenda.append((cost,new_path))
     return(agenda,visited)
+
+def get_nearest_node(nodes_db,lat,lon):
+    """ 
+    Returns the nearest node that is in a relevant way
+    
+    Parameters:
+        nodes_db: A node database which should be the first element when calling build_auxiliary_database on a database
+        lat: a latitude coordinate
+        lon: a longitude coordinate
+    Returns:
+        a node's ID that is the closest to the specified coordinate
+    """
+    min_dist = -1
+    key_min = 1
+    for node in nodes_db:
+        lat1 = nodes_db[node][0]
+        lon1 = nodes_db[node][1]
+        dist = great_circle_distance((lat1,lon1),(lat,lon))
+        # print('node outside:',node)
+        # print('distance outside:',dist)
+        if dist<min_dist or min_dist == -1:
+           # print('node:',node)
+            #print('distance:',dist)
+            if dist == 0:
+                for node2 in nodes_db:
+                    if node in nodes_db[node2][3]:
+                        min_dist = dist
+                        key_min = node
+            elif nodes_db[node][3] != set():
+                min_dist = dist
+                key_min = node
+    return key_min
+
+def get_coordinates(nodes_db,node_id):
+    lat = nodes_db[node_id][0]
+    lon = nodes_db[node_id][1]
+    return (lat,lon)
+def heuristic(key,goal,nodes_db):
+    cost = key[0]
+    path_list = key[1]
+    last_node = path_list[-1]
+    return cost+get_distance(nodes_db,last_node,goal)
 #End of Helper Functions
 def find_short_path_nodes(aux_structures, node1, node2):
     """
@@ -123,18 +166,23 @@ def find_short_path_nodes(aux_structures, node1, node2):
     if node1==node2:
         return [node1]
     agenda,visited = get_cost_and_path(nodes_db,node1,node2,0,[node1],agenda,visited)
-    
+    i = 0
+    print(i)
     while True:
+        #print('Time per loop:',time.perf_counter()-start_time)
         agenda.sort()
+        #agenda.sort(key = lambda x: heuristic(x,node2,nodes_db))
         if agenda == []:
             return None
         old_cost,path_to_consider = agenda.pop(0)
+        i+=1
         last_node = path_to_consider[-1]
         if last_node == node2:
+            print(i)
             return path_to_consider
         elif last_node not in visited:
             agenda,visited = get_cost_and_path(nodes_db,last_node,node2,old_cost,path_to_consider,agenda,visited)
-
+    
 
 def find_short_path(aux_structures, loc1, loc2):
     """
@@ -151,8 +199,25 @@ def find_short_path(aux_structures, loc1, loc2):
         a list of (latitude, longitude) tuples representing the shortest path
         (in terms of distance) from loc1 to loc2.
     """
-    raise NotImplementedError
-
+    
+    print('Time before nearest node:',time.perf_counter()-start_time)
+    nodes_db = aux_structures[0]
+    ways_db = aux_structures[1]
+    #print(nodes_db)
+    node1 = get_nearest_node(nodes_db,*loc1)
+    print('Nearest Node 1:',time.perf_counter()-start_time)
+    #print('node1:',node1)
+    node2 = get_nearest_node(nodes_db,*loc2)
+    print('Nearest Node 2:',time.perf_counter()-start_time)
+    #print('node2:',node2)
+    if node1 == node2:
+        return [get_coordinates(nodes_db,node1)]
+    path = find_short_path_nodes(aux_structures,node1,node2)
+    #print(path)
+    if path==None or len(path)==1:
+        return None
+    result = [get_coordinates(nodes_db,node_id) for node_id in path]
+    return result
 
 def find_fast_path(aux_structures, loc1, loc2):
     """
@@ -212,18 +277,23 @@ if __name__ == '__main__':
     
     '''4'''
     # mit_nodes,mit_ways = build_auxiliary_structures('resources/mit.nodes','resources/mit.ways')
-    midwest_nodes,midwest_ways = build_auxiliary_structures('resources/midwest.nodes','resources/midwest.ways')
-    lat = 41.4452463
-    lon = -89.3161394
-    # lat = 42.3575
-    # lon = -71.0952
-    #key_max = max(mit_nodes.keys(),key=lambda x: mit_nodes[x][1])
-    key_min = min(midwest_nodes.keys(),key=lambda x: great_circle_distance((midwest_nodes[x][0],(midwest_nodes[x][1])),(lat,lon)))
-    #print(mit_nodes)
-    #print(key_max)
-    #print(mit_nodes[key_max])
-    print(key_min)
-    print(midwest_nodes[key_min])
+    # print(mit_ways)
+    # midwest_nodes,midwest_ways = build_auxiliary_structures('resources/midwest.nodes','resources/midwest.ways')
+    # lat = 41.4452463
+    # lon = -89.3161394
+    # loc = (lat,lon)
+    # print(get_nearest_node(midwest_nodes,*loc))
+    '''5'''
+    #start_time = time.perf_counter()
+    cambridge_nodes,cambridge_ways = build_auxiliary_structures('resources/cambridge.nodes','resources/cambridge.ways')
+    loc1 = (42.3858, -71.0783)
+    loc2 = (42.5465, -71.1787)
+    find_short_path((cambridge_nodes,cambridge_ways),loc1,loc2)
+    print('Time so far:',time.perf_counter()-start_time)
+    #No Heuristic popped 688127 paths
+    #Heustic popped 85578 paths
+    # duration = time.perf_counter()-start_time
+    # print('it took:',duration)
     '''Testing stuff '''
     #print(find_short_path_nodes((midwest_nodes,midwest_ways),272855431, 233945564))
     
@@ -240,4 +310,7 @@ if __name__ == '__main__':
     # #print(mit_ways)
     # print(find_short_path_nodes((mit_nodes,mit_ways),node1,node2))
     #compare_result_expected(load_dataset('mit'), (node1, node2), expected_path, 'short', True)
+    # loc1 = (42.3575, -71.0956) # Parking Lot - end of a oneway and not on any other way
+    # loc2 = (42.3575, -71.0940) #close to Kresge
+    # print(get_nearest_node(mit_nodes,*loc1))
     pass
