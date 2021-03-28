@@ -2,6 +2,7 @@ import os
 import doctest
 
 import sys
+from typing import final
 if '.' not in sys.path:
     sys.path.insert(0, '.')
 from search import search
@@ -13,23 +14,8 @@ from search import search
 #  Problem 1
 ##################################################
 '''
-Returns an ordered list of elements in L that occur more than 2 times
+Returns an ordered list of elements in L that occur less 2 times
 '''
-
-# def foo(L):
-#     out = []
-#     seen = []
-#     seenagain = []
-#     for i in L:
-#         if i not in set(seen):
-#             seen.append(i)
-#         elif i not in set(seenagain):
-#             seenagain.append(i)
-#     for i in L:
-#         if i not in set(seenagain) and i not in out:
-#             out.append(i)
-#     return out
-
 
 def foo(L):
     seen = {}
@@ -44,6 +30,45 @@ def foo(L):
 #  Problem 2
 ##################################################
 
+def filter_graph (graph):
+    ''''
+    Filtering the data so that every node has all possible neighbors included
+    '''
+    unseen = set(graph.keys())
+    filtered_graph = {}
+    for node in graph:
+        
+        unseen.update(node)
+        neighbors = graph[node].copy()
+        neighbors.append(node)
+        if node not in filtered_graph:
+            filtered_graph[node] = set(neighbors)
+        else:
+            filtered_graph[node].update(neighbors)
+        for neighbor in neighbors:
+            if neighbor not in filtered_graph:
+                filtered_graph[neighbor] = 1
+                filtered_graph[neighbor] = set(neighbors)    
+            else:
+                filtered_graph[neighbor].update(neighbors)
+    return filtered_graph, unseen
+
+def bfs(visited, graph, node, queue, unseen):
+    '''
+    Standard Breadth First Search
+    '''
+    visited.append(node)
+    queue.append(node)
+    island = set()
+    while queue:
+        s = queue.pop(0) 
+        island.update(s)
+        unseen.discard(s)
+        for neighbour in graph[s]:
+            if neighbour not in visited:
+                visited.append(neighbour)
+                queue.append(neighbour)
+    return island
 
 def get_islands(graph):
     """
@@ -72,62 +97,110 @@ def get_islands(graph):
     >>> all(i in x for i in ({'A', 'B', 'C'}, {'D', 'E'}, {'F'}, {'G'}))
     True
     """
-    '''
-    Iterate through all the nodes in graph
-    If a node is not seen before, create a new island add all the neighbors into the new island
-    If in the path down neighbors, it finds a neighbor that has been seen before, it means it is connected to a previous island
-    Look for that island and merge the two sets
-    Once all nodes have been seen, then return the result
-    '''
+    filtered_graph,unseen = filter_graph(graph)
     result = []
-    seen = set()
-    #print('graph',graph)
-    for node in graph:
-        if node not in seen:
-            seen.add(node) #Updates seen and starts new island
-            island = set()
-            island.add(node)
-            neighbors = graph[node]
-            for neighbor in neighbors: #Adds neighbors
-                island,seen,result = adding_neighbors(neighbor,island,seen,result)
-            result.append(island)
-            #print(island)
-    #print('result:',result)
+    visited = []
+    queue = []
+    while unseen:
+        starting_node = unseen.pop()
+        island = bfs(visited,filtered_graph,starting_node,queue,unseen)
+        result.append(island)
     return result
 
-def adding_neighbors(neighbor,island,seen,result):
-    island.add(neighbor) #Updates seen and islands
-    seen.add(neighbor)
-    for islands in result:
-        if neighbor in islands: #Checks if the island with this neighbor exists
-            #print('found one in islands')
-            old_island = result.pop(result.index(islands)) #Replaces this old island with new island that is a union
-            #print('old island',old_island)
-            island.update(old_island)
-            #print('new island', island)
-    return island,seen,result
 ##################################################
 #  Problem 3
 ##################################################
 
 
 def setup_cats_and_dogs(cats, dogs):
-    '''
-    Dictionary of left side and right side that is a list consisting of cats (c) and dogs(d) and pat(p) and a path which is the path that should be taken
-    ''''
-    start_state = {'leftside':['c']*cats+['d']*dogs+['p'],'rightside':[], 'path':[]}
-    #return start_state
+ 
     """
     start_state should contain the initial state (vertex label) for the search
     process
     """
+    '''
+    Dictionary of left side and right side that is a list consisting of cats (c) and dogs(d) and pat(p)
+    '''
+    start_state = (cats,dogs,1,0,0,None)
+    print('starting state',start_state)
+    #return start_state
+
+                
+    def moves_to_states(moves_to_consider,original_state):
+        result = []
+        cats_on_left = original_state[0]
+        dogs_on_left = original_state[1]
+        pat_on_left = original_state[2]
+        cats_on_right = original_state[3]
+        dogs_on_right = original_state[4]
+
+        for move in moves_to_consider:
+            cats = move.count('c')
+            dogs = move.count('d')
+            if pat_on_left:
+                left_cat = cats_on_left-cats
+                left_dog = dogs_on_left-dogs
+                right_cat = cats_on_right+cats
+                right_dog = dogs_on_right+dogs
+                state = (left_cat,left_dog,0,right_cat,right_dog,move)
+            else:
+                left_cat = cats_on_left+cats
+                left_dog = dogs_on_left+dogs
+                right_cat = cats_on_right-cats
+                right_dog = dogs_on_right-dogs
+                state = (left_cat,left_dog,1,right_cat,right_dog,move)
+            result.append(state)
+        return result
 
     def successors(state):
         """
         Given a state, successors(state) should be an interable object
         containing all valid states that can be reached within one move.
         """
-        raise NotImplementedError
+        #possible_moves = ['dd','cc','dc','c','d']
+        moves_to_consider = []
+        cats_on_left = state[0]
+        dogs_on_left = state[1]
+        cats_on_right = state[3]
+        dogs_on_right = state[4]
+        pat_on_left = state[2]
+        if pat_on_left:
+            if dogs_on_left-2>-1:
+                if -2<cats_on_left-(dogs_on_left-2)<2:
+                    moves_to_consider.append('dd')
+            if dogs_on_left > 0 and cats_on_left > 0:
+                moves_to_consider.append('dc')
+            if cats_on_left-2>-1:
+                if -2<dogs_on_left-(cats_on_left-2)<2:
+                    moves_to_consider.append('cc')
+            if dogs_on_left-1>-1:
+                if cats_on_left-(dogs_on_left-1)<2:
+                    moves_to_consider.append('d')
+            if cats_on_left-1>-1:
+                if dogs_on_left-(cats_on_left-1)<2:
+                    moves_to_consider.append('c')  
+            print('left to right')
+            print(moves_to_consider)
+            return moves_to_states(moves_to_consider,state)
+        else:
+            if dogs_on_right-2>-1:
+                if -2<cats_on_right-(dogs_on_right-2)<2:
+                    moves_to_consider.append('dd')
+            if dogs_on_right > 0 and cats_on_right > 0:
+                moves_to_consider.append('dc')
+            if cats_on_right-2>-1:
+                if -2<dogs_on_right-(cats_on_right-2)<2:
+                    moves_to_consider.append('cc')
+            if dogs_on_right-1>-1:
+                if cats_on_right-(dogs_on_right-1)<2:
+                    moves_to_consider.append('d')
+            if cats_on_right-1>-1:
+                if dogs_on_right-(cats_on_right-1)<2:
+                    moves_to_consider.append('c')   
+            print('right to left')
+            print(moves_to_consider)
+            return moves_to_states(moves_to_consider,state)
+
         #Adding conditionals like pat not on the side of the river, etc
         #Moving one or two cat+dog across and checking these conditions
         #Adding the possible ones to a list
@@ -137,7 +210,8 @@ def setup_cats_and_dogs(cats, dogs):
         Return True if the given state satisfies the goal condition, and False
         otherwise.
         """
-        raise NotImplementedError
+        #print('goal state', state)
+        return sum([state[0],state[1],state[2]])==0
         #Checks that all cats and dogs and pat is on the right side of the river
 
     return successors, start_state, goal_test
@@ -154,8 +228,17 @@ def interpret_result(path):
       2. take a cat and a dog across, then
       3. take a cat across
     """
-    raise NotImplementedError
-    #Not neceesary, just return start_state['path'] when goal_test true.
+    print('path', path)
+    # if path == None:
+    #     return None
+    final_path = []
+    for state in path:
+        move = state[5]
+        if move is not None:
+            final_path.append(move)
+    print('final path', final_path)
+    print()
+    return final_path
 
 
 def cats_and_dogs(cats, dogs):

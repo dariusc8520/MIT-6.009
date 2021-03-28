@@ -12,7 +12,7 @@ def search(successors, start_state, goal_test, dfs=False):
         for child in successors(terminal_vertex):
             if child in visited:
                 continue
-            new_path = current_path + (child,)
+            new_path = current_path + (child,) 
             if goal_test(child):
                 return new_path
             visited.add(child)
