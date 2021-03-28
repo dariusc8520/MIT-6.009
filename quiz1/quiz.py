@@ -20,9 +20,9 @@ Returns an ordered list of elements in L that occur less 2 times
 def foo(L):
     seen = {}
     for i in L:
-        if i not in seen:
+        if i not in seen: #Initializes key
             seen[i]=1
-        else:
+        else: #Counter
             seen[i]+=1
     return [i for i in seen if seen[i]<2]
     
@@ -34,30 +34,28 @@ def filter_graph (graph):
     ''''
     Filtering the data so that every node has all possible neighbors included
     '''
-    unseen = set(graph.keys())
+    unseen = set(graph.keys()) #Set of nodes to pop from
     filtered_graph = {}
     for node in graph:
-        
         unseen.update(node)
         neighbors = graph[node].copy()
-        neighbors.append(node)
+        neighbors.append(node) #Includes itself
         if node not in filtered_graph:
             filtered_graph[node] = set(neighbors)
         else:
             filtered_graph[node].update(neighbors)
         for neighbor in neighbors:
             if neighbor not in filtered_graph:
-                filtered_graph[neighbor] = 1
                 filtered_graph[neighbor] = set(neighbors)    
             else:
                 filtered_graph[neighbor].update(neighbors)
     return filtered_graph, unseen
 
-def bfs(visited, graph, node, queue, unseen):
+def bfs(graph, node, queue, unseen):
     '''
     Standard Breadth First Search
+    Uses an unseen set instead of a visited set
     '''
-    visited.append(node)
     queue.append(node)
     island = set()
     while queue:
@@ -65,8 +63,7 @@ def bfs(visited, graph, node, queue, unseen):
         island.update(s)
         unseen.discard(s)
         for neighbour in graph[s]:
-            if neighbour not in visited:
-                visited.append(neighbour)
+            if neighbour in unseen:
                 queue.append(neighbour)
     return island
 
@@ -99,11 +96,10 @@ def get_islands(graph):
     """
     filtered_graph,unseen = filter_graph(graph)
     result = []
-    visited = []
     queue = []
     while unseen:
-        starting_node = unseen.pop()
-        island = bfs(visited,filtered_graph,starting_node,queue,unseen)
+        starting_node = unseen.pop() #Takes a random element from set
+        island = bfs(filtered_graph,starting_node,queue,unseen)
         result.append(island)
     return result
 
@@ -122,11 +118,30 @@ def setup_cats_and_dogs(cats, dogs):
     Dictionary of left side and right side that is a list consisting of cats (c) and dogs(d) and pat(p)
     '''
     start_state = (cats,dogs,1,0,0,None)
-    print('starting state',start_state)
-    #return start_state
 
-                
+    def check_state(state):
+        cats_on_left = state[0]
+        dogs_on_left = state[1]
+        cats_on_right = state[3]
+        dogs_on_right = state[4]
+        pat_on_left = state[2]
+
+        if cats_on_left > 0 and dogs_on_left > 0 and not pat_on_left: #Checks for a fight on left side
+            if abs(cats_on_left-dogs_on_left)>1:
+                return False
+        elif cats_on_right > 0 and dogs_on_right > 0 and pat_on_left: #Checks for a fight on right side
+            if abs(cats_on_right-dogs_on_right)>1:
+                return False
+        if cats_on_left < 0 or dogs_on_left < 0 or cats_on_right < 0 or dogs_on_right < 0: #Checks for impossible states
+            return False
+        else:
+            return True
+
     def moves_to_states(moves_to_consider,original_state):
+        '''
+        Takes a list of moves to consider and creates a state from that move
+        Input will be all 5 possible moves ['dd','cc','dc','c','d']
+        '''
         result = []
         cats_on_left = original_state[0]
         dogs_on_left = original_state[1]
@@ -137,18 +152,18 @@ def setup_cats_and_dogs(cats, dogs):
         for move in moves_to_consider:
             cats = move.count('c')
             dogs = move.count('d')
-            if pat_on_left:
-                left_cat = cats_on_left-cats
+            if pat_on_left: #Adds and removes dogs and cats accordingly
+                left_cat = cats_on_left-cats 
                 left_dog = dogs_on_left-dogs
                 right_cat = cats_on_right+cats
                 right_dog = dogs_on_right+dogs
-                state = (left_cat,left_dog,0,right_cat,right_dog,move)
+                state = (left_cat,left_dog,0,right_cat,right_dog,move) #0 represents Pat on Rightside Now
             else:
                 left_cat = cats_on_left+cats
                 left_dog = dogs_on_left+dogs
                 right_cat = cats_on_right-cats
                 right_dog = dogs_on_right-dogs
-                state = (left_cat,left_dog,1,right_cat,right_dog,move)
+                state = (left_cat,left_dog,1,right_cat,right_dog,move)#1 represents Pat on Leftside Now
             result.append(state)
         return result
 
@@ -157,62 +172,20 @@ def setup_cats_and_dogs(cats, dogs):
         Given a state, successors(state) should be an interable object
         containing all valid states that can be reached within one move.
         """
-        #possible_moves = ['dd','cc','dc','c','d']
-        moves_to_consider = []
-        cats_on_left = state[0]
-        dogs_on_left = state[1]
-        cats_on_right = state[3]
-        dogs_on_right = state[4]
-        pat_on_left = state[2]
-        if pat_on_left:
-            if dogs_on_left-2>-1:
-                if -2<cats_on_left-(dogs_on_left-2)<2:
-                    moves_to_consider.append('dd')
-            if dogs_on_left > 0 and cats_on_left > 0:
-                moves_to_consider.append('dc')
-            if cats_on_left-2>-1:
-                if -2<dogs_on_left-(cats_on_left-2)<2:
-                    moves_to_consider.append('cc')
-            if dogs_on_left-1>-1:
-                if cats_on_left-(dogs_on_left-1)<2:
-                    moves_to_consider.append('d')
-            if cats_on_left-1>-1:
-                if dogs_on_left-(cats_on_left-1)<2:
-                    moves_to_consider.append('c')  
-            print('left to right')
-            print(moves_to_consider)
-            return moves_to_states(moves_to_consider,state)
-        else:
-            if dogs_on_right-2>-1:
-                if -2<cats_on_right-(dogs_on_right-2)<2:
-                    moves_to_consider.append('dd')
-            if dogs_on_right > 0 and cats_on_right > 0:
-                moves_to_consider.append('dc')
-            if cats_on_right-2>-1:
-                if -2<dogs_on_right-(cats_on_right-2)<2:
-                    moves_to_consider.append('cc')
-            if dogs_on_right-1>-1:
-                if cats_on_right-(dogs_on_right-1)<2:
-                    moves_to_consider.append('d')
-            if cats_on_right-1>-1:
-                if dogs_on_right-(cats_on_right-1)<2:
-                    moves_to_consider.append('c')   
-            print('right to left')
-            print(moves_to_consider)
-            return moves_to_states(moves_to_consider,state)
-
-        #Adding conditionals like pat not on the side of the river, etc
-        #Moving one or two cat+dog across and checking these conditions
-        #Adding the possible ones to a list
+        moves_to_consider = ['dd','cc','dc','c','d']
+        successors = []
+        states_to_consider = moves_to_states(moves_to_consider,state) #Gets all possible states to consider
+        for state in states_to_consider:
+            if check_state(state):
+                successors.append(state)
+        return successors #only returns the valid ones
 
     def goal_test(state):
         """
         Return True if the given state satisfies the goal condition, and False
         otherwise.
         """
-        #print('goal state', state)
-        return sum([state[0],state[1],state[2]])==0
-        #Checks that all cats and dogs and pat is on the right side of the river
+        return sum([state[0],state[1],state[2]])==0 #There should be no cats, dogs or pat on the left
 
     return successors, start_state, goal_test
 
@@ -228,16 +201,13 @@ def interpret_result(path):
       2. take a cat and a dog across, then
       3. take a cat across
     """
-    print('path', path)
-    # if path == None:
-    #     return None
+    if path == None: #No valid solutions
+        return None
     final_path = []
-    for state in path:
-        move = state[5]
+    for state in path: 
+        move = state[5] #The corresponding move is included as the 6th element in each state
         if move is not None:
             final_path.append(move)
-    print('final path', final_path)
-    print()
     return final_path
 
 
@@ -252,5 +222,4 @@ def cats_and_dogs(cats, dogs):
 
 
 if __name__ == '__main__':
-    #print(setup_cats_and_dogs(3,2))
     doctest.testmod()
