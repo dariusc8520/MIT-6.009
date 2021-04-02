@@ -18,6 +18,49 @@ def dump(game):
 
 # 2-D IMPLEMENTATION
 
+def initialize_board(num_rows,num_cols):
+    '''
+    Initializing the board with 0's
+
+    Returns a board with a list of lists that is size num_rows x num_cols of [0]'s
+    '''
+    row = [0]*num_cols 
+    board = [row.copy() for i in range(num_rows)] 
+    return board
+
+def add_bombs(board,bombs):
+    '''
+    Adds the bombs in their respective positions on the game board
+    
+    Returns the update board
+    '''
+    for bomb in bombs:
+        row_index = bomb[0]
+        col_index = bomb[1]
+        board[row_index][col_index]='.'
+    return board
+
+def initialize_mask(num_rows,num_cols):
+    '''
+    Initializes a mask of all Falses
+
+    Returns a list of lists that is size num_rows x num_cols of Falses
+    '''
+    mask = [[False]*num_cols]*num_rows
+    return mask
+
+def update_bomb_neighbors(board,num_rows,num_cols):
+    for r in range(num_rows): #iterate through all elements in board
+        for c in range(num_cols):
+            if board[r][c] == 0: #if it isn't a bomb then count the number of bombs around it
+                neighbor_bombs = 0
+                for i in range(-1,2):
+                    for j in range(-1,2):
+                        if 0 <= r+i < num_rows and 0 <= c+j < num_cols:
+                            if board[r+i][c+j] == '.':
+                                neighbor_bombs += 1
+                board[r][c] = neighbor_bombs
+    return board
 
 def new_game_2d(num_rows, num_cols, bombs):
     """
@@ -45,65 +88,15 @@ def new_game_2d(num_rows, num_cols, bombs):
         [False, False, False, False]
     state: ongoing
     """
-    board = []
-    for r in range(num_rows):
-        row = []
-        for c in range(num_cols):
-            if [r,c] in bombs or (r,c) in bombs:
-                row.append('.')
-            else:
-                row.append(0)
-        board.append(row)
-    mask = []
-    for r in range(num_rows):
-        row = []
-        for c in range(num_cols):
-            row.append(False)
-        mask.append(row)
-    for r in range(num_rows):
-        for c in range(num_cols):
-            if board[r][c] == 0:
-                neighbor_bombs = 0
-                if 0 <= r-1 < num_rows:
-                    if 0 <= c-1 < num_cols:
-                        if board[r-1][c-1] == '.':
-                            neighbor_bombs += 1
-                if 0 <= r < num_rows:
-                    if 0 <= c-1 < num_cols:
-                        if board[r][c-1] == '.':
-                            neighbor_bombs += 1
-                if 0 <= r+1 < num_rows:
-                    if 0 <= c-1 < num_cols:
-                        if board[r+1][c-1] == '.':
-                            neighbor_bombs += 1
-                if 0 <= r-1 < num_rows:
-                    if 0 <= c < num_cols:
-                        if board[r-1][c] == '.':
-                            neighbor_bombs += 1
-                if 0 <= r < num_rows:
-                    if 0 <= c < num_cols:
-                        if board[r][c] == '.':
-                            neighbor_bombs += 1
-                if 0 <= r+1 < num_rows:
-                    if 0 <= c < num_cols:
-                        if board[r+1][c] == '.':
-                            neighbor_bombs += 1
-                if 0 <= r-1 < num_rows:
-                    if 0 <= c+1 < num_cols:
-                        if board[r-1][c+1] == '.':
-                            neighbor_bombs += 1
-                if 0 <= r < num_rows:
-                    if 0 <= c+1 < num_cols:
-                        if board[r][c+1] == '.':
-                            neighbor_bombs += 1
-                if 0 <= r+1 < num_rows:
-                    if 0 <= c+1 < num_cols:
-                        if board[r+1][c+1] == '.':
-                            neighbor_bombs += 1
-                board[r][c] = neighbor_bombs
+    board = add_bombs(initialize_board(num_rows,num_cols),bombs)
+
+    mask = initialize_mask(num_rows,num_cols)
+
+    updated_board = update_bomb_neighbors(board,num_rows,num_cols)
+
     return {
         'dimensions': (num_rows, num_cols),
-        'board' : board,
+        'board' : updated_board,
         'mask' : mask,
         'state': 'ongoing'}
 
@@ -304,8 +297,23 @@ def render_2d(game, xray=False):
     ...                   [False, False, False, True]]}, True)
     [['.', '3', '1', ' '], ['.', '.', '1', ' ']]
     """
-    raise NotImplementedError
-
+    board = game['board']
+    num_rows = game['dimensions'][0]
+    num_cols = game['dimensions'][1]
+    mask = game['mask']
+    for i in range(num_rows):
+        for j in range(num_cols):
+            if mask[i][j] or xray:
+                value = board[i][j]
+                if value == '.':
+                    continue        
+                elif value == 0:
+                    board[i][j] = ' '
+                elif value > 0:
+                    board[i][j] = str(value)
+            else:
+                board[i][j] = '_'
+    return board
 
 def render_ascii(game, xray=False):
     """
@@ -331,9 +339,13 @@ def render_ascii(game, xray=False):
     .31_
     __1_
     """
-    raise NotImplementedError
-
-
+    board = render_2d(game,xray)
+    game_str = ''
+    for row in board: #Rows
+        for tile in row:
+            game_str+=tile
+        game_str+='\n'
+    return game_str.strip()
 
 # N-D IMPLEMENTATION
 
@@ -473,4 +485,5 @@ if __name__ == "__main__":
     # verbose flag can be set to True to see all test results, including those
     # that pass.
     #
-    #doctest.run_docstring_examples(render_2d, globals(), optionflags=_doctest_flags, verbose=False)
+    # doctest.run_docstring_examples(render_2d, globals(), optionflags=_doctest_flags, verbose=False)
+    #dump(new_game_2d(2, 4, [(0, 0), (1, 0), (1, 1)]))
