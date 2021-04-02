@@ -46,10 +46,16 @@ def initialize_mask(num_rows,num_cols):
 
     Returns a list of lists that is size num_rows x num_cols of Falses
     '''
-    mask = [[False]*num_cols]*num_rows
+    row = [False]*num_cols 
+    mask = [row.copy() for i in range(num_rows)] 
     return mask
 
 def update_bomb_neighbors(board,num_rows,num_cols):
+    '''
+    Updates the initial board state with the number of neighboring bombs for each tile
+
+    Returns a list of lists that has updated tiles for neighboring bombs
+    '''
     for r in range(num_rows): #iterate through all elements in board
         for c in range(num_cols):
             if board[r][c] == 0: #if it isn't a bomb then count the number of bombs around it
@@ -92,14 +98,30 @@ def new_game_2d(num_rows, num_cols, bombs):
 
     mask = initialize_mask(num_rows,num_cols)
 
-    updated_board = update_bomb_neighbors(board,num_rows,num_cols)
-
+    board = update_bomb_neighbors(board,num_rows,num_cols)
+    
     return {
         'dimensions': (num_rows, num_cols),
-        'board' : updated_board,
+        'board' : board,
         'mask' : mask,
         'state': 'ongoing'}
 
+def count_bombs_and_squares(game):
+    '''
+    Counts the number of bombs and covered squares on the current game board
+
+    Returns two ints of bombs and covered squares
+    '''
+    bombs = 0
+    covered_squares = 0
+    for r in range(game['dimensions'][0]):
+        for c in range(game['dimensions'][1]):
+            if game['board'][r][c] == '.':
+                if  game['mask'][r][c] == True:
+                    bombs += 1
+            elif game['mask'][r][c] == False:
+                covered_squares += 1
+    return bombs,covered_squares
 
 def dig_2d(game, row, col):
     """
@@ -162,99 +184,37 @@ def dig_2d(game, row, col):
     state: defeat
     """
     if game['state'] == 'defeat' or game['state'] == 'victory':
-        game['state'] = game['state']  # keep the state the same
+        #game['state'] = game['state']  # keep the state the same
         return 0
-
-    if game['board'][row][col] == '.':
+    elif game['board'][row][col] == '.':
         game['mask'][row][col] = True
         game['state'] = 'defeat'
         return 1
 
-    bombs = 0
-    covered_squares = 0
-    for r in range(game['dimensions'][0]):
-        for c in range(game['dimensions'][1]):
-            if game['board'][r][c] == '.':
-                if  game['mask'][r][c] == True:
-                    bombs += 1
-            elif game['mask'][r][c] == False:
-                covered_squares += 1
+    bombs,covered_squares = count_bombs_and_squares(game)
+
     if bombs != 0:
-        # if bombs is not equal to zero, set the game state to defeat and
-        # return 0
         game['state'] = 'defeat'
         return 0
-    if covered_squares == 0:
+    elif covered_squares == 0:
         game['state'] = 'victory'
         return 0
-
-    if game['mask'][row][col] != True:
+    elif game['mask'][row][col] != True:
         game['mask'][row][col] = True
         revealed = 1
-    else:
-        return 0
+    # else:
+    #     return 0
 
     if game['board'][row][col] == 0:
         num_rows, num_cols = game['dimensions']
-        if 0 <= row-1 < num_rows:
-            if 0 <= col-1 < num_cols:
-                if game['board'][row-1][col-1] != '.':
-                    if game['mask'][row-1][col-1] == False:
-                        revealed += dig_2d(game, row-1, col-1)
-        if 0 <= row < num_rows:
-            if 0 <= col-1 < num_cols:
-                if game['board'][row][col-1] != '.':
-                    if game['mask'][row][col-1] == False:
-                        revealed += dig_2d(game, row, col-1)
-        if 0 <= row+1 < num_rows:
-            if 0 <= col-1 < num_cols:
-                if game['board'][row+1][col-1] != '.':
-                    if game['mask'][row+1][col-1] == False:
-                        revealed += dig_2d(game, row+1, col-1)
-        if 0 <= row-1 < num_rows:
-            if 0 <= col < num_cols:
-                if game['board'][row-1][col] != '.':
-                    if game['mask'][row-1][col] == False:
-                        revealed += dig_2d(game, row-1, col)
-        if 0 <= row < num_rows:
-            if 0 <= col < num_cols:
-                if game['board'][row][col] != '.':
-                    if game['mask'][row][col] == False:
-                        revealed += dig_2d(game, row, col)
-        if 0 <= row+1 < num_rows:
-            if 0 <= col < num_cols:
-                if game['board'][row+1][col] != '.':
-                    if game['mask'][row+1][col] == False:
-                        revealed += dig_2d(game, row+1, col)
-        if 0 <= row-1 < num_rows:
-            if 0 <= col+1 < num_cols:
-                if game['board'][row-1][col+1] != '.':
-                    if game['mask'][row-1][col+1] == False:
-                        revealed += dig_2d(game, row-1, col+1)
-        if 0 <= row < num_rows:
-            if 0 <= col+1 < num_cols:
-                if game['board'][row][col+1] != '.':
-                    if game['mask'][row][col+1] == False:
-                        revealed += dig_2d(game, row, col+1)
-        if 0 <= row+1 < num_rows:
-            if 0 <= col+1 < num_cols:
-                if game['board'][row+1][col+1] != '.':
-                    if game['mask'][row+1][col+1] == False:
-                        revealed += dig_2d(game, row+1, col+1)
+        for i in range(-1,2):
+            for j in range(-1,2):
+                if 0 <= row+i < num_rows and 0 <= col+j < num_cols:
+                    if game['board'][row+i][col+j] != '.' and game['mask'][row+i][col+j] == False:
+                        revealed += dig_2d(game, row+i, col+j)
 
-    bombs = 0  # set number of bombs to 0
-    covered_squares = 0
-    for r in range(game['dimensions'][0]):
-        # for each r,
-        for c in range(game['dimensions'][1]):
-            # for each c,
-            if game['board'][r][c] == '.':
-                if  game['mask'][r][c] == True:
-                    # if the game mask is True, and the board is '.', add 1 to
-                    # bombs
-                    bombs += 1
-            elif game['mask'][r][c] == False:
-                covered_squares += 1
+    bombs,covered_squares = count_bombs_and_squares(game)
+
     bad_squares = bombs + covered_squares
     if bad_squares > 0:
         game['state'] = 'ongoing'
@@ -301,11 +261,12 @@ def render_2d(game, xray=False):
     num_rows = game['dimensions'][0]
     num_cols = game['dimensions'][1]
     mask = game['mask']
+    # print(board)
     for i in range(num_rows):
         for j in range(num_cols):
             if mask[i][j] or xray:
                 value = board[i][j]
-                if value == '.':
+                if type(value) == str:
                     continue        
                 elif value == 0:
                     board[i][j] = ' '
@@ -341,7 +302,7 @@ def render_ascii(game, xray=False):
     """
     board = render_2d(game,xray)
     game_str = ''
-    for row in board: #Rows
+    for row in board: 
         for tile in row:
             game_str+=tile
         game_str+='\n'
