@@ -36,6 +36,10 @@ class Trie:
         Return the value for the specified prefix.  If the given key is not in
         the trie, raise a KeyError.  If the given key is of the wrong type,
         raise a TypeError.
+        >>> t['bat']
+        7
+        >>> t['abat']
+        4
         """
         if type(key) == Trie:
             raise KeyError
@@ -63,6 +67,11 @@ class Trie:
         Delete the given key from the trie if it exists. If the given key is not in
         the trie, raise a KeyError.  If the given key is of the wrong type,
         raise a TypeError.
+        >>> del t['del']
+        >>> t['del']
+        Traceback (most recent call last):
+            ...
+        KeyError
         """
         if type(key) != self.key_type:
             raise TypeError
@@ -86,6 +95,12 @@ class Trie:
     def __contains__(self, key):
         """
         Is key a key in the trie? return True or False.
+        >>> 'batter' in t
+        True
+        >>> 'abat' in t
+        True
+        >>> 'dababy' in t
+        False
         """
         current_Trie = self
         for i in range(len(key)):
@@ -120,6 +135,14 @@ def make_word_trie(text):
     Given a piece of text as a single string, create a Trie whose keys are the
     words in the text, and whose values are the number of times the associated
     word appears in the text
+    >>> phrase = 'hello my name is darius'
+    >>> word_trie = make_word_trie(phrase)
+    >>> 'hello' in word_trie
+    True
+    >>> 'darius' in word_trie
+    True
+    >>> 'charles' in word_trie
+    False
     """
     new_text = tokenize_sentences(text) #creates a list of strings
     word_trie = Trie(str) 
@@ -142,6 +165,10 @@ def make_phrase_trie(text):
     Given a piece of text as a single string, create a Trie whose keys are the
     sentences in the text (as tuples of individual words) and whose values are
     the number of times the associated sentence appears in the text.
+    >>> phrase = 'hello my name is darius. I am a MIT student. I like to robots. hello my name is darius. I am on the crew team'
+    >>> phrase_trie = make_phrase_trie(phrase) 
+    >>> ('hello','my','name','is','darius') in phrase_trie
+    True
     """
     new_text = tokenize_sentences(text) #creates a list of strings
     phrase_trie = Trie(tuple)
@@ -171,6 +198,8 @@ def autocomplete(trie, prefix, max_count=None):
 
     Raise a TypeError if the given prefix is of an inappropriate type for the
     trie.
+    >>> autocomplete(t,'ba')
+    ['batter', 'ba', 'bat']
     """
     if type(prefix) != trie.key_type:
         raise TypeError
@@ -205,9 +234,10 @@ def autocorrect(trie, prefix, max_count=None):
     max_count elements from the autocompletion.  If autocompletion produces
     fewer than max_count elements, include the most-frequently-occurring valid
     edits of the given word as well, up to max_count total elements.
+    >>> sorted(autocorrect(t, "bar"))
+    ['ba', 'bat']
     """
-    # >>> autocorrect(t, "bar", 3)
-    # ['bar', 'bark', 'bat']
+
     def edit(trie,prefix):
         '''
         Returns a list of all possible edits
@@ -256,7 +286,7 @@ def pattern_filter(pattern):
             if pattern[i] == '*' and pattern[i+1] == '*':
                 pass
             elif i > 0:
-                if pattern[i-1] != '*' and pattern[i] == '*' and pattern[i+1] != '*':
+                if pattern[i-1] == '?' and pattern[i] == '*' and pattern[i+1] == '?':
                     pass
                 else:
                     filtered_pattern = filtered_pattern + pattern[i]
@@ -273,6 +303,10 @@ def word_filter(trie, pattern,first = True):
          * matches any sequence of zero or more characters,
          ? matches any single character,
          otherwise char in pattern char must equal char in word.
+    >>> word_filter(t,'????')
+    [('abat', 4)]
+    >>> sorted(word_filter(t,'????*'))
+    [('abat', 4), ('batter', 20)]
     """
     if len(pattern) == 0:
         if trie.value != None:
@@ -304,14 +338,14 @@ def word_filter(trie, pattern,first = True):
         for child in trie.children:
             if child in initial_pattern:
                 result = result + [(child + word[0],word[1]) for word in word_filter(trie.children[child],remaining_pattern,first)]
-    return list(set(result))
+    return list(set(sorted(result)))
 
 
 
 # you can include test cases of your own in the block below.
 if __name__ == '__main__':
-    doctest.testmod()
-    #Initiatlize
+    
+    # #Initiatlize
     t = Trie(str)
     #set item
     t['bat'] = 7 #prefix is word
@@ -321,25 +355,66 @@ if __name__ == '__main__':
     t['abt'] = 3 #Transpose
     t['d'] = 2
     t['batter'] = 20
-    print(t.children)
-    print(t.children['a'].children)
-    print(t.children['b'].children)
-    print(t.children['b'].children['a'].children)
-    print(t.children['b'].children['a'].children['t'])
-    print(t.children['b'].children['a'].children['t'].value)
-    #get item
-    print('get item',t['bat'])
-    #print(t[1])
-    #del item
-    # del [t['bat']]
-    # print('del item')
-    print(t.children['b'].children['a'].children['t'].value)
-    #print(t['bat'])
-    #contains item
-    print('ba' in t)
-    #iter items
-    print([key for key,val in t])
-    #print('edits',edit(t,'bat'))
-    #word filter
-    print('word filter', word_filter(t,'bat*'))
-    print('pattern filter', pattern_filter('*?*?*?*'))
+    t['del'] = 29
+    # print(t['del'])
+    # phrase = 'hello my name is darius. I am a MIT student. I like to robots. hello my name is darius. I am on the crew team'
+    # phrase_trie = make_phrase_trie(phrase)
+    # for phrase in phrase_trie:
+    #     print(phrase)
+    # print(phrase_trie.children)
+    # print(('hello','my','name','is','darius') in phrase_trie)
+    doctest.testmod()
+    # print(t.children)
+    # print(t.children['a'].children)
+    # print(t.children['b'].children)
+    # print(t.children['b'].children['a'].children)
+    # print(t.children['b'].children['a'].children['t'])
+    # print(t.children['b'].children['a'].children['t'].value)
+    # #get item
+    # print('get item',t['bat'])
+    # #print(t[1])
+    # #del item
+    # # del [t['bat']]
+    # # print('del item')
+    # print(t.children['b'].children['a'].children['t'].value)
+    # #print(t['bat'])
+    # #contains item
+    # print('ba' in t)
+    # #iter items
+    # print([key for key,val in t])
+    # #print('edits',edit(t,'bat'))
+    # #word filter
+    # print('word filter', word_filter(t,'bat*'))
+    # print('pattern filter', pattern_filter('*?*?*?*'))
+    # with open("AliceInWonderland.txt", encoding="utf-8") as f:
+    #     text = f.read()
+    # phrase_trie = make_phrase_trie(text)
+    # distinct_phrases = {}
+    # for phrase in phrase_trie:
+    #     distinct_phrases.update({phrase[0]:phrase[1]})
+    # word_trie = make_word_trie(text)
+    # print(autocomplete(phrase_trie,(),6))
+    # print(autocorrect(word_trie,'hear',12))
+    # print('distinct sentences in Alice Adventures',len(distinct_phrases.keys()))
+    # print('total sentences',sum(distinct_phrases.values()))
+    # with open("Metamorphosis.txt", encoding="utf-8") as f:
+    #     text = f.read()
+    # word_trie = make_word_trie(text)
+    # print(autocomplete(word_trie,'gre',6))
+    # print(word_filter(word_trie,'c*h'))
+    # with open("TwoCities.txt", encoding="utf-8") as f:
+    #     text = f.read()
+    # word_trie = make_word_trie(text)
+    # print(word_filter(word_trie,'r?c*t'))
+    # with open("PrideAndPrejudice.txt", encoding="utf-8") as f:
+    #     text = f.read()
+    # word_trie = make_word_trie(text)
+    # print(autocorrect(word_trie,'hear'))
+    # with open("Dracula.txt", encoding="utf-8") as f:
+    #     text = f.read()
+    # word_trie = make_word_trie(text)
+    # distinct_words = {}
+    # for word in word_trie:
+    #     distinct_words.update({word[0]:word[1]})
+    # print(len(distinct_words.keys()))
+    # print(sum(distinct_words.values()))
